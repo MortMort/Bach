@@ -4,16 +4,12 @@ clc; clear; close all;
 
 %% Variable constants for test sequence
 fs = 10000
-t_end = 200
-t = linspace(0,t_end,t_end*fs);
-
+ts = 1/fs
+t_end = 75
+t = ts*(0:t_end*fs);
 t_event = 10 % [s] time between each event
-% ts_stair = 1e-3 % sample time for stair generator - (-1 -> inherited doesnt work)
 
-
-%% frequency change, TC#1
-% eventuelt tilføj et sweep fra 50 Hz til 47 hz således at testen kan køre
-% videre direkte fra startup sequence
+%% frequency change, TC1
 
 f_start = 47;
 f_top = 53;
@@ -22,6 +18,7 @@ cycles = 500;
 t_event_low = cycles/f_start
 t_event_high = cycles/f_top
 
+
 t_11 = t_event_low
 t_12 = t_11+duration
 t_13 = t_12+t_event_high
@@ -29,41 +26,38 @@ t_14 = t_13+duration;
 t_15 = t_14+t_event_low
 
 
-
-% jump to 47 Hz not part of test, thus give 10 seconds to adapt - however,
-% current implementation treats it like its a case of its own and such not
-% a continuation of start up sequence
-pha10 = sin(2*pi*f_start*t(1:t_event_low*fs));
-phb10 = sin(2*pi*f_start*t(1:t_event_low*fs) - 2*pi/3);
-phc10 = sin(2*pi*f_start*t(1:t_event_low*fs) + 2*pi/3);
+pha10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			));
+phb10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) - 2*pi/3);
+phc10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) + 2*pi/3);
 V10 = [pha10; phb10; phc10]';
 
 
+
 % 47 to 53 Hz
-pha11 = chirp(t(1:duration*fs),f_start,3,f_top,'linear',270);
-phb11 = chirp(t(1:duration*fs),f_start,3,f_top,'linear',150);
-phc11 = chirp(t(1:duration*fs),f_start,3,f_top,'linear',30);
+pha11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',270);
+phb11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',150);
+phc11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',30);
 V11 = [pha11; phb11; phc11]';
 
 
 % 53 Hz for 500 cycles
-pha12 = sin(2*pi*f_top*t(1:t_event_high*fs));
-phb12 = sin(2*pi*f_top*t(1:t_event_high*fs) - 2*pi/3);
-phc12 = sin(2*pi*f_top*t(1:t_event_high*fs) + 2*pi/3);
+pha12 = sin(2*pi*f_top*			t(1:round(t_event_high*fs)			));
+phb12 = sin(2*pi*f_top*			t(1:round(t_event_high*fs)			) - 2*pi/3);
+phc12 = sin(2*pi*f_top*			t(1:round(t_event_high*fs)			) + 2*pi/3);
 V12 = [pha12; phb12; phc12]';
 
 
 % 53 to 47 Hz
-pha13 = chirp(t(1:duration*fs),f_top,3,f_start,'linear',270);
-phb13 = chirp(t(1:duration*fs),f_top,3,f_start,'linear',150);
-phc13 = chirp(t(1:duration*fs),f_top,3,f_start,'linear',30);
+pha13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',270);
+phb13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',150);
+phc13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',30);
 V13 = [pha13; phb13; phc13]';
 
 
 % 47 Hz for 10 sec
-pha14 = sin(2*pi*f_start*t(1:t_event_low*fs));
-phb14 = sin(2*pi*f_start*t(1:t_event_low*fs) - 2*pi/3);
-phc14 = sin(2*pi*f_start*t(1:t_event_low*fs) + 2*pi/3);
+pha14 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			));
+phb14 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) - 2*pi/3);
+phc14 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) + 2*pi/3);
 V14 = [pha14; phb14; phc14]';
 
 
@@ -71,13 +65,13 @@ V14 = [pha14; phb14; phc14]';
 V1 = [V10; V11; V12; V13; V14];
 
 figures = figure(11)
-plot(t(1        : t_11*fs), [pha10; phb10; phc10]')
+plot(t(1        : round(t_11*fs)), [pha10; phb10; phc10]')
 hold on
 grid on
-plot(t(t_11*fs+1: t_12*fs), [pha11; phb11; phc11]')
-plot(t(t_12*fs+1: t_13*fs), [pha12; phb12; phc12]')
-plot(t(t_13*fs+1: t_14*fs), [pha13; phb13; phc13]')
-plot(t(t_14*fs+1: t_15*fs), [pha14; phb14; phc14]')
+plot(t(round(t_11*fs+1): round(t_12*fs)), [pha11; phb11; phc11]')
+plot(t(round(t_12*fs+1): round(t_13*fs)), [pha12; phb12; phc12]')
+plot(t(round(t_13*fs+1): round(t_14*fs)), [pha13; phb13; phc13]')
+plot(t(round(t_14*fs+1): round(t_15*fs)), [pha14; phb14; phc14]')
 
 freqtitle1 = sprintf('Frequency change: %d Hz, %d - %d Hz, %d Hz, %d - %d Hz, %d Hz',... 
     f_start, f_start, f_top, f_top, f_top, f_start)
@@ -86,7 +80,9 @@ xlabel('Time')
 ylabel('Amplitude')
 ylim([-1.2 1.2])
 
-%% phase jumps
+
+
+%% phase jumps, TC2
 f_base = 50;
 cycles = 500;
 t_recov = cycles/f_base;
@@ -162,7 +158,7 @@ ylim([-1.2 1.2])
 V2 = [V21; V22; V23; V24; V25; V26; V27];
 
 
-%% voltage fluctuations and over/under voltage
+%% voltage fluctuations and over/under voltage, TC3
 f_base = 50;
 cycles = 500;
 t_recov = cycles/f_base;
@@ -245,7 +241,7 @@ V3 = [V31; V32; V33; V34; V35; V36; V37];
 
 
 
-%% voltage dips
+%% voltage dips, TC4
 f_base = 50
 cycles = 500
 t_recov = cycles/f_base
@@ -329,7 +325,7 @@ ylim([-1.2 1.2])
 V4 = [V41; V42; V43; V44; V45; V46; V47];
 
 
-%% harmonics
+%% harmonics, TC5
 f_base = 50
 cycles = 500
 t_recov = cycles/f_base
@@ -387,7 +383,9 @@ xlabel('Time')
 ylabel('Amplitude')
 ylim([-1.2 1.2])
 
-%% interruptions
+
+V5 = [V51; V52; V53; V54];
+%% interruptions, TC6
 f_base = 50
 cycles = 500
 t_recov = cycles/f_base
@@ -450,15 +448,24 @@ phc67 = [sin(2*pi*f_base*t(1:t_fluct*fs) + 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluc
 V67 = [pha67; phb67; phc67]';
 
 figures = [figures; figure(61)]
-plot(t(1        : t_61*fs), V61)
+% plot(t(1        : t_61*fs), V61)
+% grid on
+% hold on
+% plot(t(t_61*fs+1: t_62*fs), V62)
+% plot(t(t_62*fs+1: t_63*fs), V63)
+% plot(t(t_63*fs+1: t_64*fs), V64)
+% plot(t(t_64*fs+1: t_65*fs), V65)
+% plot(t(t_65*fs+1: t_66*fs), V66)
+% plot(t(t_66*fs: t_67*fs), V67)
+plot(t(1        	   : round(t_61*fs)), V61)
 grid on
 hold on
-plot(t(t_61*fs+1: t_62*fs), V62)
-plot(t(t_62*fs+1: t_63*fs), V63)
-plot(t(t_63*fs+1: t_64*fs), V64)
-plot(t(t_64*fs+1: t_65*fs), V65)
-plot(t(t_65*fs+1: t_66*fs), V66)
-plot(t(t_66*fs: t_67*fs), V67)
+plot(t(round(t_61*fs)+1: round(t_62*fs)), V62)
+plot(t(round(t_62*fs)+1: round(t_63*fs)), V63)
+plot(t(round(t_63*fs)+1: round(t_64*fs)), V64)
+plot(t(round(t_64*fs)+1: round(t_65*fs)), V65)
+plot(t(round(t_65*fs)+1: round(t_66*fs)), V66)
+plot(t(round(t_66*fs)+1: round(t_67*fs)), V67)
 intertitle1 = sprintf('Interruptions: %d - %d pct, single, two and three phase', Amax*100, Amin*100)
 title(intertitle1)
 xlabel('Time')
@@ -475,3 +482,55 @@ V6 = [V61; V62; V63; V64; V65; V66; V67];
 %     f = fullfile(savepath,filename(i))
 %     exportgraphics(figures(i), f,'Resolution', 400)
 % end
+%% testing of rounding..
+
+
+
+%% saving signals to dir
+time = .1*(0:100)';
+timeWrong = (0:0.1:10)';
+tsData = (0:100)';
+ts = timeseries([(1:100)' + 10*rand(100,1)]);
+ttData = sin(time) + 2*rand(101,1);
+tt = timetable(seconds(time), ttData);
+
+%
+tt1 = timetable(seconds(t(1:round(t_15*fs)))', V1); 
+round(t_15*fs)/fs
+[length(t(1:round(t_15*fs))),length(V1)];
+
+tt2 = timetable(seconds(t(1:t_27*fs))', V2); 
+[length(t(1:t_27*fs)),length(V2)];
+
+tt3 = timetable(seconds(t(1:round(t_37*fs)))', V3);
+[length(t(1:round(t_37*fs))),length(V3)];
+
+tt4 = timetable(seconds(t(1:round(t_47*fs)))', V4);
+[length(t(1:round(t_47*fs))),length(V4)];
+
+tt5 = timetable(seconds(t(1:t_54*fs))', V5);
+[length(t(1:t_54*fs)),length(V5)];
+
+tt6 = timetable(seconds(t(1:round(t_67*fs)))', V6); 
+[length(t(1:round(t_67*fs))),length(V6)];
+
+
+theta_hilbert = unwrap(angle(hilbert(V1(:,1))));
+sum(V1(:,1) - sin(theta_hilbert+pi/2))
+
+
+V1(:,1); 
+est_V11 = sin(theta_hilbert+pi/2);
+
+figure()
+plot(V1(:,1))
+hold on
+plot(est_V11)
+plot(V1(:,1) - sin(theta_hilbert+pi/2))
+legend('V11', 'sin(hilbert)','diff')
+
+figure
+plot(theta10)
+hold on
+plot(theta_hilbert)
+legend('theta true', 'hilbert theta')
