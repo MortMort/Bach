@@ -3,7 +3,7 @@ clc; clear; close all;
 
 
 %% Variable constants for test sequence
-fs = 10000
+fs = 100000
 ts = 1/fs
 t_end = 75
 t = ts*(0:t_end*fs);
@@ -376,7 +376,7 @@ plot(t(t_51*fs+1: t_52*fs), V52)
 plot(t(t_52*fs+1: t_53*fs), V53)
 plot(t(t_53*fs+1: t_54*fs), V54)
 
-harmonicstitle1 = sprintf('Harmonics: no harmonics, then 5th = %.2f and 7th=%.2f, no harmonics,then 5th = %.2f and 7th=%.2f',A5_1, A7_1, A5_2, A7_2 );
+harmonicstitle1 = sprintf('Harmonics: no harmonics, then 5th = %.fpct and 7th=%.2fpct, no harmonics,then 5th = %.2pctf and 7th=%.fpct',A5_1*100, A7_1*100, A5_2*100, A7_2*100 );
 title(harmonicstitle1)
 xlabel('Time')
 ylabel('Amplitude')
@@ -791,7 +791,7 @@ overlap = 0
 spectrogram(sig_extrA,blackman(N_segment),overlap,N_segment,fs,'yaxis')
 view(-100,25)
 ylim([0 0.500])
-title('Validation of TC4 signals')
+title('Validation of TC5 signals')
 figures = [figures; figure(5)]
 %% TC6 Interruptions
 sig_extrA = V6(:,1);
@@ -804,7 +804,8 @@ magC = abs(hilbert(sig_extrC));
 
 % ------------------------- plotting -------------------------- %
 ylims = [0 1.2]
-figure()
+figure(6)
+
 subplot(4,1,1)
 plot(t(1:round(t_67*fs)), magA)
 str = 'Magnitude of phase A';
@@ -848,12 +849,14 @@ subtitle(diptitle1)
 xlabel('Time')
 ylabel('Amplitude')
 ylim([-1.2 1.2])
-
 figures = [figures; figure(6)]
 %% saving figures for test journal of test sequence
-savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\12. Documentation\test_journals\test_sequence\figures'
-filename = ["angle.png";"frequency.png";"TC1_freq.png"; "TC2_phase.png" ;"TC3_fluct.png"; "TC4_dip.png"; "TC5_harm.png"; "TC6_interrupt.png"]
-for i=1:8
-    f = fullfile(savepath,filename(i))
-    exportgraphics(figures(i), f,'Resolution', 600)
-end
+% savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\12. Documentation\test_journals\test_sequence\figures'
+% filename = ["angle.png";"frequency.png";"TC1_freq.png"; "TC2_phase.png" ;"TC3_fluct.png"; "TC4_dip.png"; "TC5_harm.png"; "TC6_interrupt.png"]
+% for i=1:8
+%     f = fullfile(savepath,filename(i))
+%     exportgraphics(figures(i), f,'Resolution', 600)
+% end
+
+%% 
+% A = 10*log10()

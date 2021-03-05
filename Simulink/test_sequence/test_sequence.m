@@ -482,7 +482,13 @@ V6 = [V61; V62; V63; V64; V65; V66; V67];
 %     f = fullfile(savepath,filename(i))
 %     exportgraphics(figures(i), f,'Resolution', 400)
 % end
-%% testing of rounding..
+%% plotting of phase a angle
+
+% figure(1)
+% plot(t(1:round(t_15*fs)),unwrap(angle(hilbert(V1(:,1))))+pi/2)
+% hold on
+% plot(t(1:round(t_15*fs)),47*2*pi*t(1:round(t_15*fs)))
+% grid on
 
 
 
@@ -495,42 +501,25 @@ ttData = sin(time) + 2*rand(101,1);
 tt = timetable(seconds(time), ttData);
 
 %
-tt1 = timetable(seconds(t(1:round(t_15*fs)))', V1); 
-round(t_15*fs)/fs
-[length(t(1:round(t_15*fs))),length(V1)];
+tt1 = timetable(seconds(t(1:round(t_15*fs)))', [unwrap(angle(hilbert(V1(:,1))))+pi/2 V1]); 
+% round(t_15*fs)/fs
+% [length(t(1:round(t_15*fs))),length(V1)];
 
-tt2 = timetable(seconds(t(1:t_27*fs))', V2); 
-[length(t(1:t_27*fs)),length(V2)];
+tt2 = timetable(seconds(t(1:round(t_27*fs)))', [unwrap(angle(hilbert(V2(:,1))))+pi/2 V2]); 
+% [length(t(1:t_27*fs)),length(V2)];
 
-tt3 = timetable(seconds(t(1:round(t_37*fs)))', V3);
-[length(t(1:round(t_37*fs))),length(V3)];
+tt3 = timetable(seconds(t(1:round(t_37*fs)))', [unwrap(angle(hilbert(V3(:,1))))+pi/2 V3]);
+% [length(t(1:round(t_37*fs))),length(V3)];
 
-tt4 = timetable(seconds(t(1:round(t_47*fs)))', V4);
-[length(t(1:round(t_47*fs))),length(V4)];
+tt4 = timetable(seconds(t(1:round(t_47*fs)))', [unwrap(angle(hilbert(V4(:,1))))+pi/2 V4]);
+% [length(t(1:round(t_47*fs))),length(V4)];
 
-tt5 = timetable(seconds(t(1:t_54*fs))', V5);
-[length(t(1:t_54*fs)),length(V5)];
+tt5 = timetable(seconds(t(1:round(t_54*fs)))', [unwrap(angle(hilbert(V5(:,1))))+pi/2 V5]);
+% [length(t(1:t_54*fs)),length(V5)];
 
-tt6 = timetable(seconds(t(1:round(t_67*fs)))', V6); 
-[length(t(1:round(t_67*fs))),length(V6)];
-
-
-theta_hilbert = unwrap(angle(hilbert(V1(:,1))));
-sum(V1(:,1) - sin(theta_hilbert+pi/2))
+tt6 = timetable(seconds(t(1:round(t_67*fs)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); 
+% [length(t(1:round(t_67*fs))),length(V6)];
 
 
-V1(:,1); 
-est_V11 = sin(theta_hilbert+pi/2);
 
-figure()
-plot(V1(:,1))
-hold on
-plot(est_V11)
-plot(V1(:,1) - sin(theta_hilbert+pi/2))
-legend('V11', 'sin(hilbert)','diff')
 
-figure
-plot(theta10)
-hold on
-plot(theta_hilbert)
-legend('theta true', 'hilbert theta')
