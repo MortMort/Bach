@@ -9,3 +9,8 @@ t_frq_step = 0.2;       % [s]
 t_phase_step = 0.3;     % [s]
 A_frq_step = 1.1;       % %-size of frequency step
 A_phase_step = 20*pi/180;  % [rad]
+
+% abEPMAFPLL:
+ki = 1;
+kp = 1;
+k_phi = 1;
