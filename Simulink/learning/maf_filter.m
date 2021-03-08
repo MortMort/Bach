@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 
-fs = 1000;
+fs = 10000;
 Ts = 1/fs;
 T_MAF = 0.02;
 N = T_MAF/Ts;
@@ -17,4 +17,4 @@ bode(H_MAF)
 a = 1;
 b = 1/N*ones(N,1);
 figure
-freqz(b,a,3000)
+freqz(b,a,10000)
