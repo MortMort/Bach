@@ -19,12 +19,7 @@ b = 1/N*ones(N,1);
 figure
 freqz(b,a,10000)
 
-% fs = 1000;
-T = 50;
-t = 1/fs*(0:(fs*T)-1);
-x = chirp(t,0,T,100);
-
-
-y = filter(b,a,x);
-figure
-plot(y)
+fs = 1000;
+T = 3;
+t = 1/fs*(0:(fs*T)-1)
+x = chirp(0,20,10,200)
