@@ -566,13 +566,13 @@ xlim([0 t_67])
 V6 = [V61; V62; V63; V64; V65; V66; V67];
 
 %% saving figures
-savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\12. Documentation\test_journals\alphabetaPLL_01\figures'
-filename = ["TC1_freq_signals.png"; "TC2_phase_signals.png" ;"TC3_fluct_signals.png"; "TC4_dip_signals.png"; "TC5_harm_signals.png"; "TC6_interrupt_signals.png"]
-for i=1:6
-    f = fullfile(savepath,filename(i))
-
-    exportgraphics(figures(i), f,'Resolution', 400)
-end
+% savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\12. Documentation\test_journals\alphabetaPLL_01\figures'
+% filename = ["TC1_freq_signals.png"; "TC2_phase_signals.png" ;"TC3_fluct_signals.png"; "TC4_dip_signals.png"; "TC5_harm_signals.png"; "TC6_interrupt_signals.png"]
+% for i=1:6
+%     f = fullfile(savepath,filename(i))
+% 
+%     exportgraphics(figures(i), f,'Resolution', 400)
+% end
 %% plotting of phase a angle
 
 % figure(1)
@@ -584,35 +584,35 @@ end
 
 
 %% saving signals to dir
-% time = .1*(0:100)';
-% timeWrong = (0:0.1:10)';
-% tsData = (0:100)';
-% ts = timeseries([(1:100)' + 10*rand(100,1)]);
-% ttData = sin(time) + 2*rand(101,1);
-% tt = timetable(seconds(time), ttData);
-% 
-% %
-% tt1 = timetable(seconds(t(1:round(t_15*fs)))', [unwrap(angle(hilbert(V1(:,1))))+pi/2 V1]); 
-% % round(t_15*fs)/fs
-% % [length(t(1:round(t_15*fs))),length(V1)];
-% 
-% tt2 = timetable(seconds(t(1:round(t_27*fs)))', [unwrap(angle(hilbert(V2(:,1))))+pi/2 V2]); 
-% % [length(t(1:t_27*fs)),length(V2)];
-% 
-% tt3 = timetable(seconds(t(1:round(t_37*fs)))', [unwrap(angle(hilbert(V3(:,1))))+pi/2 V3]);
-% % [length(t(1:round(t_37*fs))),length(V3)];
-% 
-% tt4 = timetable(seconds(t(1:round(t_47*fs)))', [unwrap(angle(hilbert(V4(:,1))))+pi/2 V4]);
-% % [length(t(1:round(t_47*fs))),length(V4)];
-% 
-% tt5 = timetable(seconds(t(1:round(t_54*fs)))', [unwrap(angle(hilbert(V5(:,1))))+pi/2 V5]);
-% % [length(t(1:t_54*fs)),length(V5)];
-% 
-% % tt6 = timetable(seconds(t(1:round(t_67*fs)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0 in test case 6
-% % [length(t(1:round(t_67*fs))),length(V6)];
-% 
-% tt6 = timetable(seconds(t(1:round(t_67*fs)+1))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0.001 in test case 6 with fs = 10kHZ
-% 
-% 
+time = .1*(0:100)';
+timeWrong = (0:0.1:10)';
+tsData = (0:100)';
+ts = timeseries([(1:100)' + 10*rand(100,1)]);
+ttData = sin(time) + 2*rand(101,1);
+tt = timetable(seconds(time), ttData);
+
+%
+tt1 = timetable(seconds(t(1:round(t_15*fs)))', [unwrap(angle(hilbert(V1(:,1))))+pi/2 V1]); 
+% round(t_15*fs)/fs
+% [length(t(1:round(t_15*fs))),length(V1)];
+
+tt2 = timetable(seconds(t(1:round(t_27*fs)))', [unwrap(angle(hilbert(V2(:,1))))+pi/2 V2]); 
+% [length(t(1:t_27*fs)),length(V2)];
+
+tt3 = timetable(seconds(t(1:round(t_37*fs)))', [unwrap(angle(hilbert(V3(:,1))))+pi/2 V3]);
+% [length(t(1:round(t_37*fs))),length(V3)];
+
+tt4 = timetable(seconds(t(1:round(t_47*fs)))', [unwrap(angle(hilbert(V4(:,1))))+pi/2 V4]);
+% [length(t(1:round(t_47*fs))),length(V4)];
+
+tt5 = timetable(seconds(t(1:round(t_54*fs)))', [unwrap(angle(hilbert(V5(:,1))))+pi/2 V5]);
+% [length(t(1:t_54*fs)),length(V5)];
+
+% tt6 = timetable(seconds(t(1:round(t_67*fs)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0 in test case 6
+% [length(t(1:round(t_67*fs))),length(V6)];
+
+tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0.001 in test case 6 with fs = 10kHZ
+
+
 
 
