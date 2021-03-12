@@ -23,8 +23,14 @@ freqz(b,a,10000)
 T = 50;
 t = 1/fs*(0:(fs*T)-1);
 x = chirp(t,0,T,100);
-
+x2 = sin(t*2*pi*50);
 
 y = filter(b,a,x);
+y2 = filter(b,a,x2);
 figure
+subplot(2,1,1)
 plot(y)
+subplot(2,1,2)
+plot(y2)
+hold on
+plot(x2+3)
