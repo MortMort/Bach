@@ -1,6 +1,7 @@
-clc; clear; close all;
+% clc; clear; close all;
 f_Hz = 50;              % Frequency in Hz
 f_rad = f_Hz*2*pi;      % Frequency in rad/s
+
 V_g = 230;              % Grid Amplitude
 
 var_noise = 2;
@@ -11,16 +12,14 @@ A_phase_step = 20*pi/180;  % [rad]
 
 % abEPMAFPLL:
 %--------------
-
-fs = 10000; % stability test
-% fs = 10000; % transient response test
+fs = 10000; % 
 Ts = 1/fs;
 
 % MAF
 T_MAF = 0.02;
 N = T_MAF/Ts;
 
-T_st = 0.02 * 4;  % "Fast" response time is 2*T_maf according to ali2018a p. 133
+T_st = 0.02 * 1; % "Fast" response time is 2*T_maf according to ali2018a p. 133
 zeta = sqrt(1/2);
 
 k_phi = (T_MAF-Ts)/2;

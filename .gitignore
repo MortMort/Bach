@@ -1,1 +1,4 @@
 # List of untracked files to ignore
+*.slxc
+slprj/
+Simulink/temp/
