@@ -605,13 +605,15 @@ tt3 = timetable(seconds(t(1:round(t_37*fs)))', [unwrap(angle(hilbert(V3(:,1))))+
 tt4 = timetable(seconds(t(1:round(t_47*fs)))', [unwrap(angle(hilbert(V4(:,1))))+pi/2 V4]);
 % [length(t(1:round(t_47*fs))),length(V4)];
 
-tt5 = timetable(seconds(t(1:round(t_54*fs)))', [unwrap(angle(hilbert(V5(:,1))))+pi/2 V5]);
+% Notice: In stead of "unwrap.." a synthetic angle is inserted (2*pi*...)!
+tt5 = timetable(seconds(t(1:round(t_54*fs)))', [2*pi*50*t(1:round(t_54*fs))' V5]);
 % [length(t(1:t_54*fs)),length(V5)];
 
 % tt6 = timetable(seconds(t(1:round(t_67*fs)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0 in test case 6
 % [length(t(1:round(t_67*fs))),length(V6)];
 
-tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0.001 in test case 6 with fs = 10kHZ
+% Notice: In stead of "unwrap.." a synthetic angle is inserted (2*pi*...)!
+tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [2*pi*50*t(1:(round(t_67*fs)+1))' V6]); %this time table can be used when Amin is set to 0.001 in test case 6 with fs = 10kHZ
 
 
 
