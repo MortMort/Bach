@@ -1,0 +1,1 @@
+int movingAvg(int *ptrArrNumbers, long *ptrSum, int pos, int len, int nextNum);
