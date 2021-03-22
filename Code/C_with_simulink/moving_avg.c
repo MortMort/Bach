@@ -1,18 +1,18 @@
 // this file makes matlab crash when run twice. It is suspected that the static array fucks it up. 
 
 
-float movingAvg(float u, float t)
+float moving_avg(float u, float t)
 {
     // static float dataArray[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // try this out tomorrow (18/3/2021)
     // static float dataArray[10] = {};
-    static float dataArray[10000];
+    static float dataArray[200];
     static int i = 0;
     int j = 0;
     float sum = 0;
 
     if (t == 0)
 	{
-        for(int ii = 0; ii< 10000;ii++)
+        for(int ii = 0; ii< 200;ii++)
         {
             dataArray[ii] = 0;
         }
@@ -25,7 +25,7 @@ float movingAvg(float u, float t)
 	}
 
     dataArray[i] = u;
-    for(int j = 0; j < 2000; j++)
+    for(int j = 0; j < 200; j++)
     {
         // sum = sum + dataArray[i+j];
         sum = sum + dataArray[j];
@@ -33,7 +33,7 @@ float movingAvg(float u, float t)
     
     
     i = i + 1;
-    return sum/2000;
+    return sum/200;
 }
 
 // #include <stdio.h>

@@ -21,9 +21,9 @@ t_event_high = cycles/f_top
 
 t_11 = t_event_low
 t_12 = t_11+duration
-t_13 = t_12+t_event_high
+t_13 = t_12+t_event_high;
 t_14 = t_13+duration;
-t_15 = t_14+t_event_low
+t_15 = t_14+t_event_low;
 
 
 pha10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			));
