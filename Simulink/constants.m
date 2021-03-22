@@ -5,8 +5,8 @@ f_rad = f_Hz*2*pi;      % Frequency in rad/s
 V_g = 230;              % Grid Amplitude
 
 var_noise = 0;
-t_frq_step = 0.2;       % [s] Previously: 0.2
-t_phase_step = 0.4;     % [s] Previously: 0.3
+t_frq_step = 4;       % [s] Previously: 0.2
+t_phase_step = 6;     % [s] Previously: 0.3
 A_frq_step = 1.1;       % %-size of frequency step
 A_phase_step = 20*pi/180;  % [rad]
 
