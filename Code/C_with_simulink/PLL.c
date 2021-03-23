@@ -148,7 +148,32 @@ float phase_detector(float cosGrid, float sinGrid, float anglePllComp)
 }
 
 
-// checking whether phase_detector works
+
+
+// making it work with floats
+// #include <stdio.h>
+// #include <math.h>
+// void main()
+// {
+//     float a, b, c, phi, alpha;
+
+//     for(int i = 0; i< 360; i++)
+//         {
+//             // 
+//             phi = 1.0*i* 3.1416/180;
+//             a = sin(phi);
+//             b = sin(phi-2*3.1416/3);
+//             c = sin(phi+2*3.1416/3);
+
+//             alpha = abc_to_alpha(a, b, c);
+//             printf("alpha at loop %i is %.5f \n", i, alpha);
+
+//         }
+    
+// }
+
+
+// // checking whether phase_detector works
 // #include <stdio.h>
 // void main()
 // {
