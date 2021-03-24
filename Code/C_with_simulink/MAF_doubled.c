@@ -9,8 +9,8 @@ float maf1(float nextSample, float t) //float t is not supposed to be included i
 {
   static float sum, out_old;
   static int pos;
-  int len = 200;
-  static float sampleArr[200] = {0}; // tried parsing len instead of 200 but didnt work
+  int len = 20;
+  static float sampleArr[20] = {0}; // tried parsing len instead of 200 but didnt work
   if (t == 0)
   {
         sum = 0;
@@ -39,8 +39,8 @@ float maf2(float nextSample, float t) //float t is not supposed to be included i
 {
   static float sum, out_old;
   static int pos;
-  int len = 200;
-  static float sampleArr[200] = {0}; // tried parsing len instead of 200 but didnt work
+  int len = 20;
+  static float sampleArr[20] = {0}; // tried parsing len instead of 200 but didnt work
   
 
   if (t == 0)

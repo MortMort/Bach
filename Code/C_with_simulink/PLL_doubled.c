@@ -28,7 +28,7 @@ float alphabeta_to_d(float alpha, float beta, float angle)
     float d;
 
 
-    d = cos(angle)*alpha + sin(angle)*beta;
+    d = cosf(angle)*alpha + sinf(angle)*beta;
 
     return d;
 }
@@ -38,7 +38,7 @@ float alphabeta_to_q(float alpha, float beta, float angle)
     float q;
 
 
-    q = -sin(angle)*alpha + cos(angle)*beta;
+    q = -sinf(angle)*alpha + cosf(angle)*beta;
 
     return q;
 }
@@ -47,7 +47,7 @@ float dq_to_alpha(float d, float q, float angle)
 {
     float alpha;
 
-    alpha = cos(angle)*d - sin(angle)*q;
+    alpha = cosf(angle)*d - sinf(angle)*q;
 
     return alpha;
 }
@@ -57,7 +57,7 @@ float dq_to_beta(float d, float q, float angle)
     float beta;
 
 
-    beta = sin(angle)*d + cos(angle)*q;
+    beta = sinf(angle)*d + cosf(angle)*q;
 
     return beta;
 }
@@ -154,7 +154,7 @@ float phase_detector(float cosGrid, float sinGrid, float anglePllComp)
 {
     float phaseError;
 
-    phaseError = sinGrid*cos(anglePllComp) - cosGrid*sin(anglePllComp);
+    phaseError = sinGrid*cosf(anglePllComp) - cosGrid*sinf(anglePllComp);
     
 
     return phaseError;
