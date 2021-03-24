@@ -5,7 +5,8 @@ float abc_to_alpha(float a, float b, float c)
 {
     float alpha;
 
-    alpha = 0.6666667 * a - 0.3333333 * b - 0.3333333 * c;
+    // alpha = 0.6666667 * a - 0.3333333 * b - 0.3333333 * c;
+    alpha = 2.0/3.0 * a - 1.0/3.0 * b - 1.0/3.0 * c;
 
     return alpha;
 }
@@ -15,7 +16,8 @@ float abc_to_beta(float a, float b, float c)
     float beta;
 
 
-    beta = 0.5773503*b - 0.5773503*c;
+    // beta = 0.5773503*b - 0.5773503*c;
+    beta = 2.0/3.0*((sqrt(3.0)/2.0)*b - (sqrt(3.0)/2.0)*c);
 
     return beta;
 }
@@ -83,7 +85,9 @@ float sin_grid(float alpha, float beta)
 
 float pi_regulator(float phaseError, float feedForward, float ki, float kp, float kPhi, float t, float Ts)
 {
-    float anglePll, integral, omega, anglePllComp, angle;
+    // float anglePll, integral, omega, anglePllComp, angle;
+    float anglePll, integral, omega;
+
     static float phaseError_old, integral_old, angle_old, omega_old;
 
     if (t == 0)
@@ -110,7 +114,8 @@ float pi_regulator(float phaseError, float feedForward, float ki, float kp, floa
 
 float pi_regulator_comp(float phaseError, float feedForward, float ki, float kp, float kPhi, float t, float Ts)
 {
-    float anglePll, integral, omega, anglePllComp, angle;
+    // float anglePll, integral, omega, anglePllComp, angle;
+    float anglePll, integral, omega, anglePllComp;
     static float phaseError_old, integral_old, angle_old, omega_old;
 
     if (t == 0)
@@ -147,8 +152,100 @@ float phase_detector(float cosGrid, float sinGrid, float anglePllComp)
     return phaseError;
 }
 
+// // // '-------------------------------------------------------------------------------------------------------------------------------------- to be deleted later..
+// float maf1(float nextSample, float t) //float t is not supposed to be included in stm
+// {
+//   static float sum, out_old;
+//   static int pos;
+//   int len = 200;
+//   static float sampleArr[200] = {0}; // tried parsing len instead of 200 but didnt work
+//   if (t == 0)
+//   {
+//         sum = 0;
+//         out_old = 0;
+//         pos = 0;
+//         for(int i = 0; i < len; i++)
+//         {
+//             sampleArr[i] = 0;
+//         }	
+//   }
+
+//   sum = sum - sampleArr[pos] + nextSample;
+//   sampleArr[pos] = nextSample;
+//   pos++;
+//   if(pos>=len)
+//   {
+//       pos = 0; 
+//   }
+// //   avg = sum / len;
+// //   return avg;
+// //   return (float) sum / len;
+//   return sum / (float) len; 
+// }
+
+// float maf2(float nextSample, float t) //float t is not supposed to be included in stm
+// {
+//   static float sum, out_old;
+//   static int pos;
+//   int len = 200;
+//   static float sampleArr[200] = {0}; // tried parsing len instead of 200 but didnt work
+  
+
+//   if (t == 0)
+//   {
+//         sum = 0;
+//         out_old = 0;
+//         pos = 0;
+//         for(int i = 0; i < len; i++)
+//         {
+//             sampleArr[i] = 0;
+//         }	
+//   }
+
+//   sum = sum - sampleArr[pos] + nextSample;
+//   sampleArr[pos] = nextSample;
+//   pos++;
+//   if(pos>=len)
+//   {
+//       pos = 0; 
+//   }
+// //   return (float) sum / len;
+//   return sum / (float) len;
+// }
+// // '-------------------------------------------------------------------------------------------------------------------------------------- to be deleted later end
 
 
+// float pll(float a, float b, float c, float feedForward, float ki, float kp, float kPhi, float t, float Ts, float angle)
+// {
+//     float alpha, beta, d, q, d_maf, q_maf, alpha1, beta1, cosGrid, sinGrid, phaseError, anglePllComp, anglePll;
+//     // static float phaseError_old, anglePllComp_old;
+//     static float anglePllComp_old;
+    
+//     if (t == 0)
+//     {
+//             anglePllComp_old = 0;
+//     }
+
+//     alpha = abc_to_alpha(a, b, c);
+//     beta = abc_to_beta(a, b, c);
+//     d = alphabeta_to_d(alpha, beta, angle);
+//     q = alphabeta_to_q(alpha, beta, angle);
+//     d_maf = maf1(d, t); 
+//     q_maf = maf1(q, t); 
+//     alpha1 = dq_to_alpha(d_maf, q_maf, angle);
+//     beta1 = dq_to_beta(d_maf, q_maf, angle);
+//     cosGrid = cos_grid(alpha1, beta1);
+//     sinGrid = sin_grid(alpha1, beta1);
+//     phaseError = phase_detector(cosGrid, sinGrid, anglePllComp_old);
+//     anglePll = pi_regulator(phaseError, feedForward, ki, kp, kPhi, t, Ts);
+//     anglePllComp = pi_regulator_comp(phaseError, feedForward, ki, kp, kPhi, t, Ts);
+
+
+
+//     anglePllComp_old = anglePllComp;
+
+//     return anglePll;
+// }
 
 // making it work with floats
 // #include <stdio.h>
