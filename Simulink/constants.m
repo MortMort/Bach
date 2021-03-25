@@ -1,4 +1,4 @@
-% clc; clear; close all;
+clc; clear; close all;
 
 f_Hz = 50;              % Frequency in Hz
 f_rad = f_Hz*2*pi;      % Frequency in rad/s
@@ -13,7 +13,7 @@ A_phase_step = 20*pi/180;  % [rad]
 
 % abEPMAFPLL:
 %--------------
-fs = 1000; % 
+fs = 100000; % 
 Ts = 1/fs;
 
 % MAF

@@ -4,11 +4,12 @@
 float abc_to_alpha(float a, float b, float c)
 {
     float alpha;
-
-    // alpha = 0.6666667 * a - 0.3333333 * b - 0.3333333 * c;
-    alpha = 2.0/3.0 * a - 1.0/3.0 * b - 1.0/3.0 * c;
+    // alpha = (float)2 * (float)a / ((float) 3); // - 0.3333333 * b - 0.3333333 * c;
+    alpha =  0.66666667 * a - 0.3333333 * b - 0.3333333 * c;
+    // alpha = 2.0/3.0 * a - 1.0/3.0 * b - 1.0/3.0 * c;
 
     return alpha;
+    // return a;
 }
 
 float abc_to_beta(float a, float b, float c)
@@ -27,7 +28,7 @@ float alphabeta_to_d(float alpha, float beta, float angle)
     float d;
 
 
-    d = cos(angle)*alpha + sin(angle)*beta;
+    d = cosf(angle)*alpha + sinf(angle)*beta;
 
     return d;
 }
@@ -37,7 +38,7 @@ float alphabeta_to_q(float alpha, float beta, float angle)
     float q;
 
 
-    q = -sin(angle)*alpha + cos(angle)*beta;
+    q = -sinf(angle)*alpha + cosf(angle)*beta;
 
     return q;
 }
@@ -46,7 +47,7 @@ float dq_to_alpha(float d, float q, float angle)
 {
     float alpha;
 
-    alpha = cos(angle)*d - sin(angle)*q;
+    alpha = cosf(angle)*d - sinf(angle)*q;
 
     return alpha;
 }
@@ -56,7 +57,7 @@ float dq_to_beta(float d, float q, float angle)
     float beta;
 
 
-    beta = sin(angle)*d + cos(angle)*q;
+    beta = sinf(angle)*d + cosf(angle)*q;
 
     return beta;
 }
@@ -89,8 +90,11 @@ float pi_regulator(float phaseError, float feedForward, float ki, float kp, floa
     float anglePll, integral, omega;
 
     static float phaseError_old, integral_old, angle_old, omega_old;
-
-    if (t == 0)
+    // static float phaseError_old=0;
+    // static float integral_old=0;
+    // static float angle_old=0;
+    // static float omega_old=0;
+    if (t < 0.00002)
     {
         phaseError_old = 0;
         integral_old = 0;
@@ -117,8 +121,12 @@ float pi_regulator_comp(float phaseError, float feedForward, float ki, float kp,
     // float anglePll, integral, omega, anglePllComp, angle;
     float anglePll, integral, omega, anglePllComp;
     static float phaseError_old, integral_old, angle_old, omega_old;
+    // static float phaseError_old=0;
+    // static float integral_old=0;
+    // static float angle_old=0;
+    // static float omega_old=0;
 
-    if (t == 0)
+    if (t < 0.00002)
     {
         phaseError_old = 0;
         integral_old = 0;
@@ -146,7 +154,7 @@ float phase_detector(float cosGrid, float sinGrid, float anglePllComp)
 {
     float phaseError;
 
-    phaseError = sinGrid*cos(anglePllComp) - cosGrid*sin(anglePllComp);
+    phaseError = sinGrid*cosf(anglePllComp) - cosGrid*sinf(anglePllComp);
     
 
     return phaseError;

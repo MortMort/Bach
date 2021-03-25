@@ -12,8 +12,3 @@ float sin_grid(float alpha, float beta);
 float pi_regulator(float phaseError, float feedForward, float ki, float kp, float kPhi, float t, float Ts);
 float pi_regulator_comp(float phaseError, float feedForward, float ki, float kp, float kPhi, float t, float Ts);
 float phase_detector(float cosGrid, float sinGrid, float anglePllComp);
-
-
-// float maf1(float nextSample, float t);
-// float maf2(float nextSample, float t);
-// float pll(float a, float b, float c, float feedForward, float ki, float kp, float kPhi, float t, float Ts, float angle);
