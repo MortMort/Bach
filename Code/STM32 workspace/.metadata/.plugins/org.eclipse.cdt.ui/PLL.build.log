@@ -1,0 +1,10 @@
+09:57:03 **** Incremental Build of configuration Debug for project PLL ****
+make -j8 all 
+arm-none-eabi-size   PLL.elf 
+   text	   data	    bss	    dec	    hex	filename
+  35744	    484	   2244	  38472	   9648	PLL.elf
+Finished building: default.size.stdout
+ 
+
+09:57:04 Build Finished. 0 errors, 0 warnings. (took 233ms)
+
