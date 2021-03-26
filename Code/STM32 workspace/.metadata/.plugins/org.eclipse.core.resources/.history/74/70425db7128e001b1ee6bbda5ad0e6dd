@@ -66,7 +66,7 @@ uint16_t dacBuf[adcBuf_LEN];
 uint16_t adcValue16;
 uint32_t adcValue32;
 
-uint16_t adcReading0;
+uint16_t adcReading0 ;
 
 uint16_t testArray[] = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 /* USER CODE END PV */
@@ -145,18 +145,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // ADC DMA implementation
-
-  HAL_ADC_Start_DMA(&hadc1, (int32_t*)&adcValue16, sizeof(adcValue16)); // Start DMA
-//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuf, sizeof(adcBuf)/sizeof(uint16_t)); // Start DMA
+//  HAL_ADC_Start_DMA(&hadc1, (int32_t*)adcValue16, sizeof(adcValue16)); // Start DMA
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuf, sizeof(adcBuf)/sizeof(uint16_t)); // Start DMA
 //  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcValue32, 1); // Start DMA (currently unused
 
   // USART DMA
 //  HAL_DMA_RegisterCallback(&hdma_usart2_tx, HAL_DMA_XFER_CPLT_CB_ID, &DMATransferComplete);
 
   // DAC DMA
-  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)&adcValue16, sizeof(adcValue16), DAC_ALIGN_12B_R);
-//  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)&adcBuf[0], sizeof(adcReading0), DAC_ALIGN_12B_R);
-
+  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)&adcBuf[0], sizeof(adcReading0), DAC_ALIGN_12B_R);
+//  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)testArray, sizeof(testArray)/sizeof(uint16_t), DAC_ALIGN_12B_R);
 
   // Timer interrupt start
   HAL_TIM_Base_Start_IT(&htim10);
@@ -183,7 +181,7 @@ int main(void)
 	// USART DMA implementation
 	huart2.Instance->CR3 |= USART_CR3_DMAT;
 	adcReading0 = adcBuf[0];
-	sprintf(msg_2, "Adc reading: %u\r\n", adcValue16);	// Update message for usart print
+	sprintf(msg_2, "Adc reading: %u\r\n", adcReading0);	// Update message for usart print
 	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg_2,
 						(uint32_t)&huart2.Instance->DR, strlen(msg_2));
 
