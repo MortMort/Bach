@@ -1,1 +1,0 @@
-float movingAvg(float u, float t);
