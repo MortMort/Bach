@@ -36,6 +36,8 @@
 
 // Size of ADC buffer
 #define adcBuf_LEN 10
+#define PI 3.14159265359
+#define TWO_PI 2*PI
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,18 +59,13 @@ UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-// USART DMA implementation
-void DMATransferComplete(DMA_HandleTypeDef *hdma);
+// USART DMA implementation: Interrupt definition
+//void DMATransferComplete(DMA_HandleTypeDef *hdma);
 
 // ADC & DAC DMA buffer
 uint16_t adcBuf[adcBuf_LEN];
-uint16_t dacBuf[adcBuf_LEN];
-uint16_t adcValue16;
-uint32_t adcValue32;
+uint16_t adcValue;
 
-uint16_t adcReading0 ;
-
-uint16_t testArray[] = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,17 +97,7 @@ int main(void)
   uint8_t buf[30];
   strcpy((char*)buf, "Hello!\r\n");
 
-  // USART DMA test string
-  char msg[] = "Getting Started With STM32 & Nucleo Part 4. "
-		  "Getting Started With STM32 & Nucleo Part 4. "
-		  "Getting Started With STM32 & Nucleo Part 4\r\n";
-
-  // USART DMA ADC reading buffer to be sent to terminal
-//  uint16_t msg_2[40];
-  char msg_2[40];
-
-  // CURRENTLY UNUSED TEST VARIABLES
-  float dataVoltage;
+  // String buffer for USART
   char adcUsartBuf[40];
 
   // DAC variables
@@ -144,17 +131,14 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  // ADC DMA implementation
-//  HAL_ADC_Start_DMA(&hadc1, (int32_t*)adcValue16, sizeof(adcValue16)); // Start DMA
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuf, sizeof(adcBuf)/sizeof(uint16_t)); // Start DMA
-//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcValue32, 1); // Start DMA (currently unused
+  // ADC DMA implementation//  HAL_ADC_Start_DMA(&hadc1, (int32_t*)adcValue16, sizeof(adcValue16)); // Start DMA
+//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuf, sizeof(adcBuf)/sizeof(uint16_t)); // Start DMA//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcValue32, 1); // Start DMA (currently unused
 
-  // USART DMA
+  // USART DMA interrupt
 //  HAL_DMA_RegisterCallback(&hdma_usart2_tx, HAL_DMA_XFER_CPLT_CB_ID, &DMATransferComplete);
 
   // DAC DMA
-  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)&adcBuf[0], sizeof(adcReading0), DAC_ALIGN_12B_R);
-//  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)testArray, sizeof(testArray)/sizeof(uint16_t), DAC_ALIGN_12B_R);
+//  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)&adcBuf[0], sizeof(adcReading0), DAC_ALIGN_12B_R);//  HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t*)testArray, sizeof(testArray)/sizeof(uint16_t), DAC_ALIGN_12B_R);
 
   // Timer interrupt start
   HAL_TIM_Base_Start_IT(&htim10);
@@ -167,40 +151,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	/*
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);	// GPIOA - A = out????
-	HAL_Delay(1000);
-	HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
-	*/
-
-//	dataVoltage = (float)adcBuf[0];
-//	sprintf(adcUsartBuf, "Adc reading: %.2f\r\n", dataVoltage);
-//	HAL_UART_Transmit(&huart2, (uint8_t*)adcUsartBuf, strlen(adcUsartBuf), HAL_MAX_DELAY);
-//	HAL_Delay(100);
-
-	// USART DMA implementation
-	huart2.Instance->CR3 |= USART_CR3_DMAT;
-	adcReading0 = adcBuf[0];
-	sprintf(msg_2, "Adc reading: %u\r\n", adcReading0);	// Update message for usart print
-	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg_2,
-						(uint32_t)&huart2.Instance->DR, strlen(msg_2));
 
 
-
-//	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
-//					(uint32_t)&huart2.Instance->DR, strlen(msg));
-//	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg_2,
-//						(uint32_t)&huart2.Instance->DR, (uint32_t)strlen((char*)msg_2));
-
-
-	/*
-	// DAC implementation (NON DMA)
-	HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
-	//var = out_voltage * (0xfff+1)/3.3;		// convert desired voltage to digital value
-	var = adcBuf[0];
-
-	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var); // Set dac to digital value
-	*/
 
     /* USER CODE END WHILE */
 
@@ -411,9 +363,9 @@ static void MX_TIM10_Init(void)
 
   /* USER CODE END TIM10_Init 1 */
   htim10.Instance = TIM10;
-  htim10.Init.Prescaler = 10000-1;
+  htim10.Init.Prescaler = 100-1;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 18000-1;
+  htim10.Init.Period = 180-1;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
@@ -567,13 +519,40 @@ static void MX_GPIO_Init(void)
 //}
 
 // Timer 10 (TIM10) interrupt:
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-//{
-//  if (htim == &htim10)
-//  {
-//    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
-//  }
-//}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == &htim10)
+  {
+	// Set pin: Start timer
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+
+    static uint16_t var;
+
+    // ADC
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    adcValue = HAL_ADC_GetValue(&hadc1);
+
+
+
+	// USART DMA implementation
+//	huart2.Instance->CR3 |= USART_CR3_DMAT;
+//	adcReading0 = adcBuf[0];
+//	sprintf(msg_2, "Adc reading: %u\r\n", adcReading0);	// Update message for usart print
+//	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg_2,
+//						(uint32_t)&huart2.Instance->DR, strlen(msg_2));
+
+
+
+    // DAC
+    var = adcValue;
+    HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var); // Set dac to digital value
+
+	// Reset pin: Stop timer
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+  }
+}
 
 
 /* USER CODE END 4 */
