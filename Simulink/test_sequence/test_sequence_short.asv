@@ -1,11 +1,13 @@
 clc; clear; close all;
 %% script for generating test sequence for PLL's
-
+%this scripts is meant to be a short version of test sequence, in order to
+%be able to create signals that are shorter than 2^15 samples, as this is
+%the maximum signal length the analog discovery can import
 
 %% Variable constants for test sequence
 fs = 10000
 ts = 1/fs
-t_end = 75
+t_end = 2^15 * ts
 t = ts*(0:t_end*fs);
 t_event = 10 % [s] time between each event
 fontsize=18
@@ -13,8 +15,8 @@ fontsize=18
 
 f_start = 47;
 f_top = 53;
-duration = 3;
-cycles = 500;
+duration = 1.1;   % previously 3, 2 Hz pr sec from standard.
+cycles = 9; % previously 500
 t_event_low = cycles/f_start
 t_event_high = cycles/f_top
 
@@ -25,7 +27,7 @@ t_13 = t_12+t_event_high;
 t_14 = t_13+duration;
 t_15 = t_14+t_event_low;
 
-
+%%
 pha10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			));
 phb10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) - 2*pi/3);
 phc10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) + 2*pi/3);
@@ -34,9 +36,9 @@ V10 = [pha10; phb10; phc10]';
 
 
 % 47 to 53 Hz
-pha11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',270);
-phb11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',150);
-phc11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',30);
+pha11 = chirp(					t(1:round(duration*fs)				),f_start,duration,f_top,'linear',270);
+phb11 = chirp(					t(1:round(duration*fs)				),f_start,duration,f_top,'linear',150);
+phc11 = chirp(					t(1:round(duration*fs)				),f_start,duration,f_top,'linear',30);
 V11 = [pha11; phb11; phc11]';
 
 
@@ -48,9 +50,9 @@ V12 = [pha12; phb12; phc12]';
 
 
 % 53 to 47 Hz
-pha13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',270);
-phb13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',150);
-phc13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',30);
+pha13 = chirp(					t(1:round(duration*fs)				),f_top,duration,f_start,'linear',270);
+phb13 = chirp(					t(1:round(duration*fs)				),f_top,duration,f_start,'linear',150);
+phc13 = chirp(					t(1:round(duration*fs)				),f_top,duration,f_start,'linear',30);
 V13 = [pha13; phb13; phc13]';
 
 
@@ -65,15 +67,15 @@ V14 = [pha14; phb14; phc14]';
 V1 = [V10; V11; V12; V13; V14];
 
 % figures = figure(11)
-figures = figure('Position', [500 500 900 600])
+figures = figure('Position', [700 700 900 600])
 
-plot(t(1        : round(t_11*fs)), [pha10; phb10; phc10]')
-hold on
-grid on
-plot(t(round(t_11*fs+1): round(t_12*fs)), [pha11; phb11; phc11]')
-plot(t(round(t_12*fs+1): round(t_13*fs)), [pha12; phb12; phc12]')
-plot(t(round(t_13*fs+1): round(t_14*fs)), [pha13; phb13; phc13]')
-plot(t(round(t_14*fs+1): round(t_15*fs)), [pha14; phb14; phc14]')
+plot(t(1        	   : round(t_11*fs)), V10) %[pha10; phb10; phc10]')
+hold on                                   
+grid on                                   
+plot(t(round(t_11*fs+1): round(t_12*fs)), V11) %[pha11; phb11; phc11]')
+plot(t(round(t_12*fs+1): round(t_13*fs)), V12) %[pha12; phb12; phc12]')
+plot(t(round(t_13*fs+1): round(t_14*fs)), V13) %[pha13; phb13; phc13]')
+plot(t(round(t_14*fs+1): round(t_15*fs)), V14) %[pha14; phb14; phc14]')
 
 freqtitle1 = sprintf('Frequency change: %d Hz, %d - %d Hz, %d Hz, %d - %d Hz, %d Hz',... 
     f_start, f_start, f_top, f_top, f_top, f_start)
@@ -87,7 +89,7 @@ xlim([0 t_15])
 
 %% phase jumps, TC2
 f_base = 50;
-cycles = 500;
+cycles = 10;
 t_recov = cycles/f_base;
 phi_shift = 20*pi/180
 
@@ -148,12 +150,21 @@ figures = [figures; figure('Position', [500 500 900 600])]
 plot(t(1        : t_21*fs), V21)
 grid on
 hold on
-plot(t(t_21*fs+1: t_22*fs), V22)
-plot(t(t_22*fs+1: t_23*fs), V23)
-plot(t(t_23*fs+1: t_24*fs), V24)
-plot(t(t_24*fs+1: t_25*fs), V25)
-plot(t(t_25*fs+1: t_26*fs), V26)
-plot(t(t_26*fs+1: t_27*fs), V27)
+plot(t(1        	   : round(t_21*fs)), V21) 
+grid on
+hold on
+plot(t(round(t_21*fs+1): round(t_22*fs)), V22)
+plot(t(round(t_22*fs+1): round(t_23*fs)), V23)
+plot(t(round(t_23*fs+1): round(t_24*fs)), V24)
+plot(t(round(t_24*fs+1): round(t_25*fs)), V25)
+plot(t(round(t_25*fs+1): round(t_26*fs)), V26)
+plot(t(round(t_26*fs+1): round(t_27*fs)), V27)
+% plot(t(t_21*fs+1: t_22*fs), V22)
+% plot(t(t_22*fs+1: t_23*fs), V23)
+% plot(t(t_23*fs+1: t_24*fs), V24)
+% plot(t(t_24*fs+1: t_25*fs), V25)
+% plot(t(t_25*fs+1: t_26*fs), V26)
+% plot(t(t_26*fs+1: t_27*fs), V27)
 phasetitle1 = sprintf('Phase jump: +/- %d°, 1, 2 and 3 phase', phi_shift*180/pi)
 title(phasetitle1,'FontSize', fontsize)
 xlabel('Time')
@@ -165,7 +176,7 @@ V2 = [V21; V22; V23; V24; V25; V26; V27];
 
 %% voltage fluctuations and over/under voltage, TC3
 f_base = 50;
-cycles = 500;
+cycles = 20;
 t_recov = cycles/f_base;
 fluct_rate = f_base*0.12/5; % percent pr sec
 % t_recov = 10;
@@ -248,7 +259,7 @@ V3 = [V31; V32; V33; V34; V35; V36; V37];
 
 %% voltage dips, TC4
 f_base = 50
-cycles = 500
+cycles = 20
 t_recov = cycles/f_base
 fluct_rate = f_base*0.9/2 % percent pr sec
 Amax = 1
@@ -333,7 +344,7 @@ V4 = [V41; V42; V43; V44; V45; V46; V47];
 
 %% harmonics, TC5
 f_base = 50
-cycles = 500
+cycles = 40
 t_recov = cycles/f_base
 t_harmonics = t_recov
 Amax = 1
@@ -392,99 +403,10 @@ ylim([-1.2 1.2])
 xlim([0 t_54])
 
 V5 = [V51; V52; V53; V54];
-%% interruptions, TC6
-% f_base = 50
-% cycles = 500
-% t_recov = cycles/f_base
-% fluct_rate = f_base*1/2 % percent pr sec
-% Amax = 1
-% Amin = 0.00
-% t_fluct = (Amax-Amin)/fluct_rate
-% down_cycles = 7
-% t_down = down_cycles/f_base
-% 
-% t_61  = t_recov; 
-% t_62  = t_61  + (t_down+t_fluct); 
-% t_63  = t_62  + t_recov;
-% t_64  = t_63  + (t_down+t_fluct); 
-% t_65  = t_64  + t_recov;
-% t_66  = t_65  + (t_down+t_fluct); 
-% t_67  = t_66  + t_recov;
-% 
-% % start up
-% pha61 = Amax*sin(2*pi*f_base*t(1:t_recov*fs));
-% phb61 = Amax*sin(2*pi*f_base*t(1:t_recov*fs) - 2*pi/3);
-% phc61 = Amax*sin(2*pi*f_base*t(1:t_recov*fs) + 2*pi/3);
-% V61 = [pha61; phb61; phc61]';
-% 
-% % single phase interruption
-% % pha62 = [sin(2*pi*f_base*t(1:t_fluct*fs)).*(Amax-fluct_rate*t(1:t_fluct*fs)),  Amin*sin(2*pi*f_base*t(t_fluct*fs+1:  t_recov*fs))];
-% pha62 = [sin(2*pi*f_base*t(1:t_fluct*fs))            .*(Amax-fluct_rate*t(1:t_fluct*fs)),   Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs))];
-% phb62 =                                                                                     Amax*sin(2*pi*f_base*t(1:                (t_down+t_fluct)*fs) - 2*pi/3);
-% phc62 =                                                                                     Amax*sin(2*pi*f_base*t(1:                (t_down+t_fluct)*fs) + 2*pi/3);
-% V62 = [pha62; phb62; phc62]';   
-% 
-% % single phase restore
-% pha63 = [sin(2*pi*f_base*t(1:t_fluct*fs))           .*(Amin+fluct_rate*t(1:t_fluct*fs)),    Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs))];
-% phb63 =                                                                                     Amax*sin(2*pi*f_base*t(1:                t_recov*fs) - 2*pi/3);
-% phc63 =                                                                                     Amax*sin(2*pi*f_base*t(1:                t_recov*fs) + 2*pi/3);
-% V63 = [pha63; phb63; phc63]';
-% 
-% % two phase interruption                                               XXXXXXXXXXXXXXXXXXXXXXXXXXX      her sker fase forskydning
-% pha64 = [sin(2*pi*f_base*t(1:t_fluct*fs))		 	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs))];
-% phb64 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs) - 2*pi/3)];
-% phc64 =                                                                        				Amax*sin(2*pi*f_base*t(1:                (t_down+t_fluct)*fs) + 2*pi/3);
-% V64 = [pha64; phb64; phc64]';
-% 
-% % two phase restore
-% pha65 = [sin(2*pi*f_base*t(1:t_fluct*fs))			.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs))];
-% phb65 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs) - 2*pi/3)];
-% phc65 =                                                                        				Amax*sin(2*pi*f_base*t(1:                t_recov*fs) + 2*pi/3);
-% V65 = [pha65; phb65; phc65]';
-% 
-% % three phase interruption
-% pha66 = [sin(2*pi*f_base*t(1:t_fluct*fs))		 	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs))];
-% phb66 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs) - 2*pi/3)];
-% phc66 = [sin(2*pi*f_base*t(1:t_fluct*fs) + 2*pi/3)	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs) + 2*pi/3)];
-% V66 = [pha66; phb66; phc66]';
-% 
-% % three phase restore
-% pha67 = [sin(2*pi*f_base*t(1:t_fluct*fs))			.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs))];
-% phb67 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs) - 2*pi/3)];
-% phc67 = [sin(2*pi*f_base*t(1:t_fluct*fs) + 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs) + 2*pi/3)];
-% V67 = [pha67; phb67; phc67]';
-% 
-% figures = [figures; figure(61)]
-% % plot(t(1        : t_61*fs), V61)
-% % grid on
-% % hold on
-% % plot(t(t_61*fs+1: t_62*fs), V62)
-% % plot(t(t_62*fs+1: t_63*fs), V63)
-% % plot(t(t_63*fs+1: t_64*fs), V64)
-% % plot(t(t_64*fs+1: t_65*fs), V65)
-% % plot(t(t_65*fs+1: t_66*fs), V66)
-% % plot(t(t_66*fs: t_67*fs), V67)
-% plot(t(1        	   : round(t_61*fs)), V61)
-% grid on
-% hold on
-% plot(t(round(t_61*fs)+1: round(t_62*fs)), V62)
-% plot(t(round(t_62*fs)+1: round(t_63*fs)), V63)
-% plot(t(round(t_63*fs)+1: round(t_64*fs)), V64)
-% plot(t(round(t_64*fs)+1: round(t_65*fs)), V65)
-% plot(t(round(t_65*fs)+1: round(t_66*fs)), V66)
-% plot(t(round(t_66*fs)+1: round(t_67*fs)), V67)
-% intertitle1 = sprintf('Interruptions: %d - %d pct, single, two and three phase', Amax*100, Amin*100)
-% title(intertitle1)
-% xlabel('Time')
-% ylabel('Amplitude')
-% ylim([-1.2 1.2])
-% 
-% V6 = [V61; V62; V63; V64; V65; V66; V67];
-
 
 %% this part is for 100 kHz with Amin = 0.0001
 f_base = 50
-cycles = 500
+cycles = 20
 t_recov = cycles/f_base
 fluct_rate = f_base*1/2 % percent pr sec
 Amax = 1
@@ -552,7 +474,7 @@ hold on
 plot(t(round(t_61*fs)+1: round(t_62*fs)), V62)
 plot(t(round(t_62*fs)+1: round(t_63*fs)), V63)
 % plot(t(round(t_63*fs)+1: round(t_64*fs)), V64)
-plot(t(round(t_63*fs)  : round(t_64*fs)), V64)
+plot(t(round(t_63*fs)+1: round(t_64*fs)), V64)
 plot(t(round(t_64*fs)+1: round(t_65*fs)), V65)
 plot(t(round(t_65*fs)+1: round(t_66*fs)), V66)
 plot(t(round(t_66*fs)+1: round(t_67*fs)), V67)
