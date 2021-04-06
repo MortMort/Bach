@@ -2,3 +2,6 @@
 *.slxc
 slprj/
 Simulink/temp/
+*.log
+*.
+Code/STM32_workspace/.metadata/
