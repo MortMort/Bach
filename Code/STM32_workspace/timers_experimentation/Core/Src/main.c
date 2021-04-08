@@ -68,7 +68,6 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  uint16_t timer_val;
 
   /* USER CODE END 1 */
 
@@ -95,10 +94,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Start timer
-  HAL_TIM_Base_Start(&htim14);
+  HAL_TIM_Base_Start_IT(&htim14);
 
-  // Get current time (microseconds)
-  timer_val = __HAL_TIM_GET_COUNTER(&htim14);
 
   /* USER CODE END 2 */
 
@@ -106,12 +103,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // If enough time has passed (1 second), toggle LED and get new timestamp
-	  if (__HAL_TIM_GET_COUNTER(&htim14) - timer_val >= 10000)
-	  {
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-		  timer_val = __HAL_TIM_GET_COUNTER(&htim14);
-	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -182,7 +174,7 @@ static void MX_TIM14_Init(void)
   htim14.Instance = TIM14;
   htim14.Init.Prescaler = 80 - 1;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 65536 - 1;
+  htim14.Init.Period = 10000 - 1;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
@@ -253,7 +245,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+// Callback: timer has rolled over
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  // Check which version of the timer triggered this callback and toggle LED
+  if (htim == &htim14 )
+  {
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+  }
+}
 /* USER CODE END 4 */
 
 /**
