@@ -13,7 +13,7 @@ A_phase_step = 20*pi/180;  % [rad]
 
 % abEPMAFPLL:
 %--------------
-fs = 100000; % 
+fs = 10000; % 
 Ts = 1/fs;
 
 % MAF
