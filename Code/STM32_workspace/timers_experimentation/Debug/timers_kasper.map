@@ -20,10 +20,10 @@ c:/st/stm32cubeide_1.6.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externalt
 Allocating common symbols
 Common symbol       size              file
 
-htim10              0x48              Core/Src/main.o
 uwTick              0x4               Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
 pFlash              0x20              Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.o
 huart2              0x44              Core/Src/main.o
+htim14              0x48              Core/Src/main.o
 
 Discarded input sections
 
@@ -2797,7 +2797,7 @@ LOAD c:/st/stm32cubeide_1.6.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .text.SystemClock_Config
                 0x0000000008000520       0xdc Core/Src/main.o
                 0x0000000008000520                SystemClock_Config
- .text.MX_TIM10_Init
+ .text.MX_TIM14_Init
                 0x00000000080005fc       0x48 Core/Src/main.o
  .text.MX_USART2_UART_Init
                 0x0000000008000644       0x54 Core/Src/main.o
@@ -2846,9 +2846,9 @@ LOAD c:/st/stm32cubeide_1.6.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .text.SysTick_Handler
                 0x00000000080008a8        0xc Core/Src/stm32f4xx_it.o
                 0x00000000080008a8                SysTick_Handler
- .text.TIM1_UP_TIM10_IRQHandler
+ .text.TIM8_TRG_COM_TIM14_IRQHandler
                 0x00000000080008b4       0x14 Core/Src/stm32f4xx_it.o
-                0x00000000080008b4                TIM1_UP_TIM10_IRQHandler
+                0x00000000080008b4                TIM8_TRG_COM_TIM14_IRQHandler
  .text.SystemInit
                 0x00000000080008c8       0x24 Core/Src/system_stm32f4xx.o
                 0x00000000080008c8                SystemInit
@@ -2870,7 +2870,7 @@ LOAD c:/st/stm32cubeide_1.6.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
                 0x000000000800093c                TAMP_STAMP_IRQHandler
                 0x000000000800093c                CAN2_RX1_IRQHandler
                 0x000000000800093c                EXTI3_IRQHandler
-                0x000000000800093c                TIM8_TRG_COM_TIM14_IRQHandler
+                0x000000000800093c                TIM1_UP_TIM10_IRQHandler
                 0x000000000800093c                TIM8_UP_TIM13_IRQHandler
                 0x000000000800093c                I2C3_ER_IRQHandler
                 0x000000000800093c                EXTI0_IRQHandler
@@ -3164,8 +3164,8 @@ LOAD c:/st/stm32cubeide_1.6.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  *(.bss*)
  *(COMMON)
  COMMON         0x0000000020000028       0x8c Core/Src/main.o
-                0x0000000020000028                htim10
-                0x0000000020000070                huart2
+                0x0000000020000028                huart2
+                0x000000002000006c                htim14
  COMMON         0x00000000200000b4        0x4 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
                 0x00000000200000b4                uwTick
                 0x00000000200000b8                . = ALIGN (0x4)
@@ -3380,32 +3380,32 @@ LOAD c:/st/stm32cubeide_1.6.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_line    0x000000000000968e     0x197b Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
  .debug_line    0x000000000000b009     0x1a74 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.o
 
-.debug_str      0x0000000000000000    0xcc15a
+.debug_str      0x0000000000000000    0xcc15f
  .debug_str     0x0000000000000000    0xc90c9 Core/Src/main.o
                                       0xc9417 (size before relaxing)
  .debug_str     0x00000000000c90c9      0x58e Core/Src/stm32f4xx_hal_msp.o
                                       0xc97ca (size before relaxing)
- .debug_str     0x00000000000c9657       0xd6 Core/Src/stm32f4xx_it.o
-                                      0xc8f73 (size before relaxing)
- .debug_str     0x00000000000c972d       0xaf Core/Src/system_stm32f4xx.o
+ .debug_str     0x00000000000c9657       0xdb Core/Src/stm32f4xx_it.o
+                                      0xc8f78 (size before relaxing)
+ .debug_str     0x00000000000c9732       0xaf Core/Src/system_stm32f4xx.o
                                       0xc8b3b (size before relaxing)
- .debug_str     0x00000000000c97dc       0x36 Core/Startup/startup_stm32f446retx.o
+ .debug_str     0x00000000000c97e1       0x36 Core/Startup/startup_stm32f446retx.o
                                          0x97 (size before relaxing)
- .debug_str     0x00000000000c9812      0x58d Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
+ .debug_str     0x00000000000c9817      0x58d Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
                                       0xc965e (size before relaxing)
- .debug_str     0x00000000000c9d9f      0x399 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.o
+ .debug_str     0x00000000000c9da4      0x399 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.o
                                       0xc9428 (size before relaxing)
- .debug_str     0x00000000000ca138      0x15f Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.o
+ .debug_str     0x00000000000ca13d      0x15f Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.o
                                       0xc8ce2 (size before relaxing)
- .debug_str     0x00000000000ca297      0x259 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.o
+ .debug_str     0x00000000000ca29c      0x259 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.o
                                       0xc8f42 (size before relaxing)
- .debug_str     0x00000000000ca4f0      0x324 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.o
+ .debug_str     0x00000000000ca4f5      0x324 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.o
                                       0xc8f9f (size before relaxing)
- .debug_str     0x00000000000ca814      0xe21 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
+ .debug_str     0x00000000000ca819      0xe21 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
                                       0xc9e3e (size before relaxing)
- .debug_str     0x00000000000cb635      0x538 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
+ .debug_str     0x00000000000cb63a      0x538 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
                                       0xc95ef (size before relaxing)
- .debug_str     0x00000000000cbb6d      0x5ed Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.o
+ .debug_str     0x00000000000cbb72      0x5ed Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.o
                                       0xc947a (size before relaxing)
 
 .comment        0x0000000000000000       0x53

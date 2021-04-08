@@ -39,11 +39,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_line   0000ca7d  00000000  00000000  0004f8cc  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000cc15a  00000000  00000000  0005c349  2**0
+ 18 .debug_str    000cc15f  00000000  00000000  0005c349  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  001284a3  2**0
+ 19 .comment      00000053  00000000  00000000  001284a8  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00003214  00000000  00000000  001284f8  2**2
+ 20 .debug_frame  00003214  00000000  00000000  001284fc  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -383,12 +383,12 @@ int main(void)
  8000508:	f000 f8c6 	bl	8000698 <MX_GPIO_Init>
   MX_USART2_UART_Init();
  800050c:	f000 f89a 	bl	8000644 <MX_USART2_UART_Init>
-  MX_TIM10_Init();
- 8000510:	f000 f874 	bl	80005fc <MX_TIM10_Init>
+  MX_TIM14_Init();
+ 8000510:	f000 f874 	bl	80005fc <MX_TIM14_Init>
   /* USER CODE BEGIN 2 */
 
   // Start timer
-  HAL_TIM_Base_Start_IT(&htim10);
+  HAL_TIM_Base_Start_IT(&htim14);
  8000514:	4801      	ldr	r0, [pc, #4]	; (800051c <main+0x20>)
  8000516:	f001 fac3 	bl	8001aa0 <HAL_TIM_Base_Start_IT>
 
@@ -398,7 +398,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
  800051a:	e7fe      	b.n	800051a <main+0x1e>
- 800051c:	20000028 	.word	0x20000028
+ 800051c:	2000006c 	.word	0x2000006c
 
 08000520 <SystemClock_Config>:
 /**
@@ -538,64 +538,64 @@ void SystemClock_Config(void)
  80005f4:	40023800 	.word	0x40023800
  80005f8:	40007000 	.word	0x40007000
 
-080005fc <MX_TIM10_Init>:
-  * @brief TIM10 Initialization Function
+080005fc <MX_TIM14_Init>:
+  * @brief TIM14 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM10_Init(void)
+static void MX_TIM14_Init(void)
 {
  80005fc:	b580      	push	{r7, lr}
  80005fe:	af00      	add	r7, sp, #0
-  /* USER CODE END TIM10_Init 0 */
+  /* USER CODE END TIM14_Init 0 */
 
-  /* USER CODE BEGIN TIM10_Init 1 */
+  /* USER CODE BEGIN TIM14_Init 1 */
 
-  /* USER CODE END TIM10_Init 1 */
-  htim10.Instance = TIM10;
- 8000600:	4b0e      	ldr	r3, [pc, #56]	; (800063c <MX_TIM10_Init+0x40>)
- 8000602:	4a0f      	ldr	r2, [pc, #60]	; (8000640 <MX_TIM10_Init+0x44>)
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+ 8000600:	4b0e      	ldr	r3, [pc, #56]	; (800063c <MX_TIM14_Init+0x40>)
+ 8000602:	4a0f      	ldr	r2, [pc, #60]	; (8000640 <MX_TIM14_Init+0x44>)
  8000604:	601a      	str	r2, [r3, #0]
-  htim10.Init.Prescaler = 90 - 1;
- 8000606:	4b0d      	ldr	r3, [pc, #52]	; (800063c <MX_TIM10_Init+0x40>)
+  htim14.Init.Prescaler = 90 - 1;
+ 8000606:	4b0d      	ldr	r3, [pc, #52]	; (800063c <MX_TIM14_Init+0x40>)
  8000608:	2259      	movs	r2, #89	; 0x59
  800060a:	605a      	str	r2, [r3, #4]
-  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
- 800060c:	4b0b      	ldr	r3, [pc, #44]	; (800063c <MX_TIM10_Init+0x40>)
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+ 800060c:	4b0b      	ldr	r3, [pc, #44]	; (800063c <MX_TIM14_Init+0x40>)
  800060e:	2200      	movs	r2, #0
  8000610:	609a      	str	r2, [r3, #8]
-  htim10.Init.Period = 1000 - 1;
- 8000612:	4b0a      	ldr	r3, [pc, #40]	; (800063c <MX_TIM10_Init+0x40>)
+  htim14.Init.Period = 1000 - 1;
+ 8000612:	4b0a      	ldr	r3, [pc, #40]	; (800063c <MX_TIM14_Init+0x40>)
  8000614:	f240 32e7 	movw	r2, #999	; 0x3e7
  8000618:	60da      	str	r2, [r3, #12]
-  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
- 800061a:	4b08      	ldr	r3, [pc, #32]	; (800063c <MX_TIM10_Init+0x40>)
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+ 800061a:	4b08      	ldr	r3, [pc, #32]	; (800063c <MX_TIM14_Init+0x40>)
  800061c:	2200      	movs	r2, #0
  800061e:	611a      	str	r2, [r3, #16]
-  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
- 8000620:	4b06      	ldr	r3, [pc, #24]	; (800063c <MX_TIM10_Init+0x40>)
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+ 8000620:	4b06      	ldr	r3, [pc, #24]	; (800063c <MX_TIM14_Init+0x40>)
  8000622:	2200      	movs	r2, #0
  8000624:	619a      	str	r2, [r3, #24]
-  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
- 8000626:	4805      	ldr	r0, [pc, #20]	; (800063c <MX_TIM10_Init+0x40>)
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+ 8000626:	4805      	ldr	r0, [pc, #20]	; (800063c <MX_TIM14_Init+0x40>)
  8000628:	f001 f9ea 	bl	8001a00 <HAL_TIM_Base_Init>
  800062c:	4603      	mov	r3, r0
  800062e:	2b00      	cmp	r3, #0
- 8000630:	d001      	beq.n	8000636 <MX_TIM10_Init+0x3a>
+ 8000630:	d001      	beq.n	8000636 <MX_TIM14_Init+0x3a>
   {
     Error_Handler();
  8000632:	f000 f877 	bl	8000724 <Error_Handler>
   }
-  /* USER CODE BEGIN TIM10_Init 2 */
+  /* USER CODE BEGIN TIM14_Init 2 */
 
-  /* USER CODE END TIM10_Init 2 */
+  /* USER CODE END TIM14_Init 2 */
 
 }
  8000636:	bf00      	nop
  8000638:	bd80      	pop	{r7, pc}
  800063a:	bf00      	nop
- 800063c:	20000028 	.word	0x20000028
- 8000640:	40014400 	.word	0x40014400
+ 800063c:	2000006c 	.word	0x2000006c
+ 8000640:	40002000 	.word	0x40002000
 
 08000644 <MX_USART2_UART_Init>:
   * @brief USART2 Initialization Function
@@ -661,7 +661,7 @@ static void MX_USART2_UART_Init(void)
  800068a:	bf00      	nop
  800068c:	bd80      	pop	{r7, pc}
  800068e:	bf00      	nop
- 8000690:	20000070 	.word	0x20000070
+ 8000690:	20000028 	.word	0x20000028
  8000694:	40004400 	.word	0x40004400
 
 08000698 <MX_GPIO_Init>:
@@ -743,7 +743,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  8000700:	af00      	add	r7, sp, #0
  8000702:	6078      	str	r0, [r7, #4]
   // Check which version of the timer triggered this callback and toggle LED
-  if (htim == &htim10 )
+  if (htim == &htim14 )
  8000704:	687b      	ldr	r3, [r7, #4]
  8000706:	4a05      	ldr	r2, [pc, #20]	; (800071c <HAL_TIM_PeriodElapsedCallback+0x20>)
  8000708:	4293      	cmp	r3, r2
@@ -759,7 +759,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  8000716:	3708      	adds	r7, #8
  8000718:	46bd      	mov	sp, r7
  800071a:	bd80      	pop	{r7, pc}
- 800071c:	20000028 	.word	0x20000028
+ 800071c:	2000006c 	.word	0x2000006c
  8000720:	40020000 	.word	0x40020000
 
 08000724 <Error_Handler>:
@@ -852,42 +852,42 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
  8000782:	b084      	sub	sp, #16
  8000784:	af00      	add	r7, sp, #0
  8000786:	6078      	str	r0, [r7, #4]
-  if(htim_base->Instance==TIM10)
+  if(htim_base->Instance==TIM14)
  8000788:	687b      	ldr	r3, [r7, #4]
  800078a:	681b      	ldr	r3, [r3, #0]
  800078c:	4a0e      	ldr	r2, [pc, #56]	; (80007c8 <HAL_TIM_Base_MspInit+0x48>)
  800078e:	4293      	cmp	r3, r2
  8000790:	d115      	bne.n	80007be <HAL_TIM_Base_MspInit+0x3e>
   {
-  /* USER CODE BEGIN TIM10_MspInit 0 */
+  /* USER CODE BEGIN TIM14_MspInit 0 */
 
-  /* USER CODE END TIM10_MspInit 0 */
+  /* USER CODE END TIM14_MspInit 0 */
     /* Peripheral clock enable */
-    __HAL_RCC_TIM10_CLK_ENABLE();
+    __HAL_RCC_TIM14_CLK_ENABLE();
  8000792:	2300      	movs	r3, #0
  8000794:	60fb      	str	r3, [r7, #12]
  8000796:	4b0d      	ldr	r3, [pc, #52]	; (80007cc <HAL_TIM_Base_MspInit+0x4c>)
- 8000798:	6c5b      	ldr	r3, [r3, #68]	; 0x44
+ 8000798:	6c1b      	ldr	r3, [r3, #64]	; 0x40
  800079a:	4a0c      	ldr	r2, [pc, #48]	; (80007cc <HAL_TIM_Base_MspInit+0x4c>)
- 800079c:	f443 3300 	orr.w	r3, r3, #131072	; 0x20000
- 80007a0:	6453      	str	r3, [r2, #68]	; 0x44
+ 800079c:	f443 7380 	orr.w	r3, r3, #256	; 0x100
+ 80007a0:	6413      	str	r3, [r2, #64]	; 0x40
  80007a2:	4b0a      	ldr	r3, [pc, #40]	; (80007cc <HAL_TIM_Base_MspInit+0x4c>)
- 80007a4:	6c5b      	ldr	r3, [r3, #68]	; 0x44
- 80007a6:	f403 3300 	and.w	r3, r3, #131072	; 0x20000
+ 80007a4:	6c1b      	ldr	r3, [r3, #64]	; 0x40
+ 80007a6:	f403 7380 	and.w	r3, r3, #256	; 0x100
  80007aa:	60fb      	str	r3, [r7, #12]
  80007ac:	68fb      	ldr	r3, [r7, #12]
-    /* TIM10 interrupt Init */
-    HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 0, 0);
+    /* TIM14 interrupt Init */
+    HAL_NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 0, 0);
  80007ae:	2200      	movs	r2, #0
  80007b0:	2100      	movs	r1, #0
- 80007b2:	2019      	movs	r0, #25
+ 80007b2:	202d      	movs	r0, #45	; 0x2d
  80007b4:	f000 fa11 	bl	8000bda <HAL_NVIC_SetPriority>
-    HAL_NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
- 80007b8:	2019      	movs	r0, #25
+    HAL_NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
+ 80007b8:	202d      	movs	r0, #45	; 0x2d
  80007ba:	f000 fa2a 	bl	8000c12 <HAL_NVIC_EnableIRQ>
-  /* USER CODE BEGIN TIM10_MspInit 1 */
+  /* USER CODE BEGIN TIM14_MspInit 1 */
 
-  /* USER CODE END TIM10_MspInit 1 */
+  /* USER CODE END TIM14_MspInit 1 */
   }
 
 }
@@ -896,7 +896,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
  80007c2:	46bd      	mov	sp, r7
  80007c4:	bd80      	pop	{r7, pc}
  80007c6:	bf00      	nop
- 80007c8:	40014400 	.word	0x40014400
+ 80007c8:	40002000 	.word	0x40002000
  80007cc:	40023800 	.word	0x40023800
 
 080007d0 <HAL_UART_MspInit>:
@@ -1152,29 +1152,29 @@ void SysTick_Handler(void)
  80008b0:	bf00      	nop
  80008b2:	bd80      	pop	{r7, pc}
 
-080008b4 <TIM1_UP_TIM10_IRQHandler>:
+080008b4 <TIM8_TRG_COM_TIM14_IRQHandler>:
 
 /**
-  * @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
+  * @brief This function handles TIM8 trigger and commutation interrupts and TIM14 global interrupt.
   */
-void TIM1_UP_TIM10_IRQHandler(void)
+void TIM8_TRG_COM_TIM14_IRQHandler(void)
 {
  80008b4:	b580      	push	{r7, lr}
  80008b6:	af00      	add	r7, sp, #0
-  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
+  /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 0 */
 
-  /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim10);
- 80008b8:	4802      	ldr	r0, [pc, #8]	; (80008c4 <TIM1_UP_TIM10_IRQHandler+0x10>)
+  /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim14);
+ 80008b8:	4802      	ldr	r0, [pc, #8]	; (80008c4 <TIM8_TRG_COM_TIM14_IRQHandler+0x10>)
  80008ba:	f001 f961 	bl	8001b80 <HAL_TIM_IRQHandler>
-  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
+  /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 1 */
 
-  /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
+  /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 1 */
 }
  80008be:	bf00      	nop
  80008c0:	bd80      	pop	{r7, pc}
  80008c2:	bf00      	nop
- 80008c4:	20000028 	.word	0x20000028
+ 80008c4:	2000006c 	.word	0x2000006c
 
 080008c8 <SystemInit>:
   *         configuration.
