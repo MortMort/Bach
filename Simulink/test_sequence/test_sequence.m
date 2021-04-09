@@ -3,7 +3,7 @@ clc; clear; close all;
 
 
 %% Variable constants for test sequence
-fs = 100000
+fs = 10000
 ts = 1/fs
 t_end = 75
 t = ts*(0:t_end*fs);
@@ -583,7 +583,7 @@ V6 = [V61; V62; V63; V64; V65; V66; V67];
 
 
 
-%% saving signals to dir
+%% saving signals to workspace
 time = .1*(0:100)';
 timeWrong = (0:0.1:10)';
 tsData = (0:100)';
@@ -592,29 +592,58 @@ ttData = sin(time) + 2*rand(101,1);
 tt = timetable(seconds(time), ttData);
 
 %
-tt1 = timetable(seconds(t(1:round(t_15*fs)))', [unwrap(angle(hilbert(V1(:,1))))+pi/2 V1]); 
+% tt1 = timetable(seconds(t(1:round(t_15*fs)))', [unwrap(angle(hilbert(V1(:,1))))+pi/2 V1]);
+tt1 = timetable(seconds(t(1:round(t_15*fs)))', [mod(unwrap(angle(hilbert(V1(:,1))))+pi/2,2*pi) V1]); %modulus of phase
 % round(t_15*fs)/fs
 % [length(t(1:round(t_15*fs))),length(V1)];
 
-tt2 = timetable(seconds(t(1:round(t_27*fs)))', [unwrap(angle(hilbert(V2(:,1))))+pi/2 V2]); 
+% tt2 = timetable(seconds(t(1:round(t_27*fs)))', [unwrap(angle(hilbert(V2(:,1))))+pi/2 V2]);
+tt2 = timetable(seconds(t(1:round(t_27*fs)))', [mod(unwrap(angle(hilbert(V2(:,1))))+pi/2,2*pi) V2]); %modulus of phase
 % [length(t(1:t_27*fs)),length(V2)];
 
-tt3 = timetable(seconds(t(1:round(t_37*fs)))', [unwrap(angle(hilbert(V3(:,1))))+pi/2 V3]);
+% tt3 = timetable(seconds(t(1:round(t_37*fs)))', [unwrap(angle(hilbert(V3(:,1))))+pi/2 V3]);
+tt3 = timetable(seconds(t(1:round(t_37*fs)))', [mod(unwrap(angle(hilbert(V3(:,1))))+pi/2,2*pi) V3]); %modulus of phase
 % [length(t(1:round(t_37*fs))),length(V3)];
 
-tt4 = timetable(seconds(t(1:round(t_47*fs)))', [unwrap(angle(hilbert(V4(:,1))))+pi/2 V4]);
+% tt4 = timetable(seconds(t(1:round(t_47*fs)))', [unwrap(angle(hilbert(V4(:,1))))+pi/2 V4]);
+tt4 = timetable(seconds(t(1:round(t_47*fs)))', [mod(unwrap(angle(hilbert(V4(:,1))))+pi/2,2*pi) V4]); %modulus of phase
 % [length(t(1:round(t_47*fs))),length(V4)];
 
 % Notice: In stead of "unwrap.." a synthetic angle is inserted (2*pi*...)!
-tt5 = timetable(seconds(t(1:round(t_54*fs)))', [2*pi*50*t(1:round(t_54*fs))' V5]);
+% tt5 = timetable(seconds(t(1:round(t_54*fs)))', [2*pi*50*t(1:round(t_54*fs))' V5]);
+tt5 = timetable(seconds(t(1:round(t_54*fs)))', [mod(2*pi*50*t(1:round(t_54*fs)),2*pi)' V5]); %modulus of phase
 % [length(t(1:t_54*fs)),length(V5)];
 
-% tt6 = timetable(seconds(t(1:round(t_67*fs)))', [unwrap(angle(hilbert(V6(:,1))))+pi/2 V6]); %this time table can be used when Amin is set to 0 in test case 6
-% [length(t(1:round(t_67*fs))),length(V6)];
 
 % Notice: In stead of "unwrap.." a synthetic angle is inserted (2*pi*...)!
-tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [2*pi*50*t(1:(round(t_67*fs)+1))' V6]); %this time table can be used when Amin is set to 0.001 in test case 6 with fs = 10kHZ
+% tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [2*pi*50*t(1:(round(t_67*fs)+1))' V6]); %this time table can be used when Amin is set to 0.001 in test case 6 with fs = 10kHZ
+tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [mod(2*pi*50*t(1:(round(t_67*fs)+1)),2*pi)' V6]); %modulus of phase
 
+
+figure()
+% stackedplot(tt6)
+plot(seconds(t(1:round(t_67*fs+1))), mod(2*pi*50*t(1:(round(t_67*fs)+1)),2*pi))
+%% saving signals to directory
+% convert timetables to tables without 'sec' extensions to all time
+% measurements
+% TT = {tt1, tt2, tt3, tt4, tt5, tt6}
+% T = {0, 0, 0, 0, 0, 0}
+% for i=1:6
+%     T{i} = timetable2table(TT{1,i});
+%     T{i}.Time = seconds(T{i}.Time);
+%     T{i} = splitvars(T{i});
+%     T{i}.Properties.VariableNames(1:5) = {'Time', 'True phase angle', 'Phase A', 'Phase B', 'Phase C'};
+%     
+% end
+% 
+% 
+% savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\10. Accepttest\Accepttest specification\Signals_TC'
+% filename = ["TC1.csv"; "TC2.csv"; "TC3.csv"; "TC4.csv"; "TC5.csv"; "TC6.csv"]
+% for i=1:6
+%     f = fullfile(savepath,filename(i));
+%     writetable(T{1,i},f);
+%     
+% end
 
 
 
