@@ -1,7 +1,16 @@
 # List of untracked files to ignore
+#----------------------------------------------
+
+# Simulink
 *.slxc
 slprj/
 Simulink/temp/
 *.log
 *.
 Code/STM32_workspace/.metadata/
+
+# STM32CubeIDE / Visual studio??
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
