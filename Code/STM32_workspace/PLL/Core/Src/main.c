@@ -41,12 +41,13 @@
 
 // Size of ADC buffer
 #define adcBuf_LEN 10
-#define PI 3.14159265359
+//#define PI 3.14159265359
+#define PI 3.14159265358979323846
 #define TWO_PI 2*PI
 #define F_RAD 50*TWO_PI
-#define F_SAMPLE 10000
+#define F_SAMPLE 1000
 //#define T_SAMPLE 1/F_SAMPLE
-#define T_SAMPLE 0.0001
+#define T_SAMPLE 0.001
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,9 +61,7 @@ ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac;
-DMA_HandleTypeDef hdma_dac1;
 
-TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart2;
@@ -78,18 +77,24 @@ void sine_creator3();
 uint16_t adcBuf[adcBuf_LEN];
 uint16_t adcValue1;
 uint16_t adcValue2;
-float phaseA, phaseB, phaseC, angle;
+
+
+float phaseA, phaseB, phaseC, angleDq;
 
 // Declared in interrupt normally
-float angle, alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
+float alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
 float phaseError, anglePllComp, anglePll;
 
 float ki = 2938.8889;
 float kp = 106.0408611;
 float kPhi = 0.010;
 
-float sine1[10000];
-float sine2[10000];
+float sine1[F_SAMPLE];
+float sine2[F_SAMPLE];
+
+// File opening pointer
+//FILE *fpt;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,7 +105,6 @@ static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_DAC_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -118,16 +122,10 @@ static void MX_ADC2_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  // Cope string into buffer (Buffer is integer buffer therefore (char*))
-  uint8_t buf[30];
-  strcpy((char*)buf, "Hello!\r\n");
-
-  // String buffer for USART
-  char adcUsartBuf[40];
-
   // Sine creator test:
   sine_creator2();
   sine_creator3();
+
 
   //	huart2.Instance->CR3 |= USART_CR3_DMAT;
   //	adcReading0 = adcBuf[0];
@@ -161,9 +159,9 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM10_Init();
   MX_DAC_Init();
-  MX_TIM2_Init();
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
+
 
   // ADC DMA implementation//  HAL_ADC_Start_DMA(&hadc1, (int32_t*)adcValue16, sizeof(adcValue16)); // Start DMA
 //  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuf, sizeof(adcBuf)/sizeof(uint16_t)); // Start DMA//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcValue32, 1); // Start DMA (currently unused
@@ -177,8 +175,6 @@ int main(void)
   // Timer interrupt start
   HAL_TIM_Base_Start_IT(&htim10);
 
- // Timer 2 start - DAC starts on every timer 2 update!
-  HAL_TIM_Base_Start(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -371,7 +367,7 @@ static void MX_DAC_Init(void)
   }
   /** DAC channel OUT1 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
@@ -380,51 +376,6 @@ static void MX_DAC_Init(void)
   /* USER CODE BEGIN DAC_Init 2 */
 
   /* USER CODE END DAC_Init 2 */
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 90-1;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 10-1;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -446,9 +397,9 @@ static void MX_TIM10_Init(void)
 
   /* USER CODE END TIM10_Init 1 */
   htim10.Instance = TIM10;
-  htim10.Init.Prescaler = 100-1;
+  htim10.Init.Prescaler = 180-1;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 180-1;
+  htim10.Init.Period = 1000-1 ;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
@@ -517,9 +468,6 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
@@ -606,17 +554,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim == &htim10)
   {
+    static uint16_t count; 			// Counter for sine output
+    static uint16_t var_dac;		// Dac output variable
+    static float dac_temp;			// Temporary float for dac output
+//    static uint8_t temp;
+
+    // PLL variables start
+    // Variables declared globally for easier debugging.
+    //    static float angleDq, alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
+    // PLL variables end
+
 	// Set pin: Start timer
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 
-    static uint16_t var;
-
-    // PLL variables start
-
-    // Variables declared globally for easier debugging.
-//    static float angle, alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
-
-    // PLL variables end
+//    if (temp == 0)
+//    {
+//    	fpt = fopen("qqqqqq.csv", "w+");
+//    	fprintf(fpt,"Vd, Vq, alpha1, beta1\n");
+//    	temp = 1;
+//    }
 
     // ADC 1
     HAL_ADC_Start(&hadc1);
@@ -629,9 +585,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     adcValue2 = HAL_ADC_GetValue(&hadc2);
 
 
-    phaseA = (float)adcValue1/(0xFFF+1);
-    phaseB = (float)adcValue2/(0xFFF+1);
+//    phaseA = (float)adcValue1/(0xFFF+1);
+//    phaseB = (float)adcValue2/(0xFFF+1);
+//    phaseC = two_to_three_phase(&phaseA, &phaseB);
+
+    phaseA = sine1[count];
+    phaseB = sine2[count];
     phaseC = two_to_three_phase(&phaseA, &phaseB);
+
 
 	// USART DMA implementation
 //	huart2.Instance->CR3 |= USART_CR3_DMAT;
@@ -642,21 +603,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     // PLL StartT_SAMPLE
     //--------------------------------------------------------------------------------------------
-    angle = angle + T_SAMPLE*F_RAD;
-    if (angle > TWO_PI)
+    angleDq = angleDq + T_SAMPLE*F_RAD;
+    if (angleDq > TWO_PI)
     {
-    	angle = angle - TWO_PI;
+    	angleDq = angleDq - TWO_PI;
     }
 
 
     alpha1 = abc_to_alpha(phaseA, phaseB, phaseC);
     beta1 = abc_to_beta(phaseA, phaseB, phaseC);
 
-    Vd = alphabeta_to_d(alpha1, beta1, angle);
-    Vq = alphabeta_to_q(alpha1, beta1, angle);
+    Vd = alphabeta_to_d(alpha1, beta1, angleDq);
+    Vq = alphabeta_to_q(alpha1, beta1, angleDq);
 
-    alpha2 = dq_to_alpha(Vd, Vq, angle);
-    beta2 = dq_to_beta(Vd, Vq, angle);
+    alpha2 = dq_to_alpha(Vd, Vq, angleDq);
+    beta2 = dq_to_beta(Vd, Vq, angleDq);
 
     cosGrid = cos_grid(alpha2, beta2);
     sinGrid = sin_grid(alpha2, beta2);
@@ -665,14 +626,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     anglePll = pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
     anglePllComp = pi_regulator_comp(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
-    anglePll = pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
+    // anglePll = pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
     //--------------------------------------------------------------------------------------------
     // PLL End
 
     // DAC
-    var = Vd*(0xFFF+1);
+    dac_temp = (alpha1 + 1) * 4096.0/4.0; // +1 for offset, /4 for scaling
+    var_dac = (uint16_t)dac_temp; //
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var); // Set dac to digital value
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
+
+
+	if (count < F_SAMPLE)
+	{
+	  count++;
+	}
+	else
+	{
+	  count = 0;
+//	  fclose(fpt);
+//	  temp = 2;
+	}
+//	if (temp == 1)
+//	{
+//		fprintf(fpt, "%0.3f, %0.3f, %0.3f, %0.3f\n", Vd, Vq, alpha1, beta1);
+//	}
+
 
 	// Reset pin: Stop timer
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
@@ -683,9 +662,9 @@ void sine_creator2()
 {
 	// Create 50 Hz sine with 0 phase shift
 	uint32_t var;
-	for (var = 0; var < 10000; ++var)
+	for (var = 0; var < F_SAMPLE; ++var)
 	{
-		sine1[var] = sinf(50.0*(float)var*1/F_SAMPLE*2*PI);
+		sine1[var] = sinf(50.0 * (float)var * 1/F_SAMPLE * TWO_PI);
 	}
 }
 
@@ -693,11 +672,14 @@ void sine_creator3()
 {
 	// Create 50 Hz sine with 120 deg phase shift
 	uint32_t var;
-	for (var = 0; var < 10000; ++var)
+	for (var = 0; var < F_SAMPLE; ++var)
 	{
-		sine2[var] = sinf(50.0*(float)var*1/F_SAMPLE*2*PI + 120*PI/180);
+		sine2[var] = sinf(50.0 * (float)var * 1/F_SAMPLE * TWO_PI - 120 * PI/180);
 	}
 }
+
+
+
 /* USER CODE END 4 */
 
 /**
