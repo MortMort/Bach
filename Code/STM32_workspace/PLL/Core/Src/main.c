@@ -642,10 +642,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
 
     // Ring buffer
-    ringBufData[0] = ((float)Vq * (float)RING_BUF_SCALING);
-    ringBufData[1] = ((float)Vd * (float)RING_BUF_SCALING);
-    ringBufData[2] = ((float)alpha1 * (float)RING_BUF_SCALING);
-    ringBufData[3] = ((float)beta1 * (float)RING_BUF_SCALING);
+    ringBufData[0] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+    ringBufData[1] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
+    ringBufData[2] = ((float)	angleDq 			* (float)RING_BUF_SCALING);
+    ringBufData[3] = ((float)	beta1 			* (float)RING_BUF_SCALING);
 
     ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger, 0.25, &readStart);
 
@@ -678,7 +678,7 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][4], uint16_t 
     static uint16_t readIndex   =   0;
     static uint8_t init         =   0;
 
-    static char msg[20];	// Initialize string to be written to USART
+    static char msg[40];	// Initialize string to be written to USART
 
     // Initialize readIndex to readStart
     if (!init) {

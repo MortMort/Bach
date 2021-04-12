@@ -1,5 +1,6 @@
 // this file contains all the functions of PLL.
 #include <math.h>
+#include "INCLUDES.c"
 
 float abc_to_alpha(float a, float b, float c)
 {
@@ -96,11 +97,15 @@ float pi_regulator(float phaseError, float feedForward, float ki, float kp, floa
     anglePll = (omega*0.5 + omega_old*0.5)*Ts + angle_old; 
     // anglePllComp = anglePll - (omega - feedForward - phaseError*kp)*kPhi;
 
+    if (anglePll > TWO_PI) {
+    		anglePll = anglePll - TWO_PI;
+    }
+
     phaseError_old = phaseError;
     integral_old = integral;
     angle_old = anglePll;
     omega_old = omega;
-    
+
 
     return anglePll;
 }
@@ -114,6 +119,11 @@ float pi_regulator_comp(float phaseError, float feedForward, float ki, float kp,
     omega = phaseError*kp + integral + feedForward; 
 
     anglePll = (omega*0.5 + omega_old*0.5)*Ts + angle_old; 
+
+    if (anglePll > TWO_PI) {
+        	anglePll = anglePll - TWO_PI;
+    }
+
     anglePllComp = anglePll - (omega - feedForward - phaseError*kp)*kPhi;
 
     phaseError_old = phaseError;
