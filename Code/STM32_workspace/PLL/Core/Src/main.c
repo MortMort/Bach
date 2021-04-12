@@ -40,14 +40,17 @@
 /* USER CODE BEGIN PD */
 
 
-#define adcBuf_LEN 		10									// Size of ADC buffer (unused)
-#define RING_BUF_LEN 	2000								// Size of ring buffer
-#define PI 				(3.1415926535897)
-#define TWO_PI 			(2.0*PI)
-#define F_RAD 			(50.0f*3.1415926535897f)
-#define F_SAMPLE 		1000
-#define T_SAMPLE 		0.001f
-#define T_SINE 			1.0f								// [s] sine time
+#define adcBuf_LEN 			10									// Size of ADC buffer (unused)
+#define RING_BUF_LEN 		2000								// Size of ring buffer
+#define PI 					(3.1415926535897)
+#define TWO_PI 				(2.0*PI)
+#define F_RAD 				(50.0f*3.1415926535897f*2.0f)
+#define F_SAMPLE 			1000
+#define T_SAMPLE 			0.001f
+#define T_SINE 				1.0f								// [s] sine time
+#define RAD_120				120.0f*3.1415926535897f/180.0f
+//#define RING_BUF_SCALING	0xFFFF/(2*TWO_PI)	// 5215.2
+#define RING_BUF_SCALING	5000				// Lower than above for protection against noise
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -74,7 +77,7 @@ DMA_HandleTypeDef hdma_usart2_tx;
 uint16_t adcBuf[adcBuf_LEN];
 uint16_t readStart;
 
-uint16_t ringBuf[RING_BUF_LEN];
+int16_t ringBuf[RING_BUF_LEN];
 uint16_t adcValue1;
 uint16_t adcValue2;
 
@@ -117,7 +120,7 @@ static void MX_ADC2_Init(void);
 
 void sine_phaseA();
 void sine_phaseB();
-uint8_t printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t readStart);
+uint8_t printRingBuf(uint16_t bufferSize, int16_t *circularBuffer, uint16_t readStart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -570,6 +573,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static uint16_t var_dac;		// Dac output variable
     static float dac_temp;			// Temporary float for dac output
 
+    static int16_t ringBufVar1;
+    static int16_t ringBufVar2;
+    static int16_t ringBufVar3;
+    static int16_t ringBufVar4;
+
     // PLL variables start
     // Variables declared globally for easier debugging.
     //    static float angleDq, alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
@@ -593,9 +601,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //    phaseB = (float)adcValue2/(0xFFF+1);
 //    phaseC = two_to_three_phase(&phaseA, &phaseB);
 
-    phaseA = sine1[count];
-    phaseB = sine2[count];
-    phaseC = two_to_three_phase(&phaseA, &phaseB);
+
 
 
 	// USART DMA implementation
@@ -618,6 +624,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     	angleDq = angleDq - TWO_PI;
     }
 
+    phaseA = sinf(angleDq);
+	phaseB = sinf(angleDq-RAD_120);
+//	phaseC = two_to_three_phase(&phaseA, &phaseB);
+	phaseC = sinf(angleDq+RAD_120);
 
     alpha1 = abc_to_alpha(phaseA, phaseB, phaseC);
     beta1 = abc_to_beta(phaseA, phaseB, phaseC);
@@ -639,13 +649,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // PLL End
 
     // DAC
-    dac_temp = (phaseA + 1) * 4096.0/4.0; // +1 for offset, /4 for scaling
-    var_dac = (uint16_t)dac_temp; //
+    dac_temp = (Vd + 1.05) * 4096.0/3.3;	// +1 for offset for negative values, /3.3 for scaling
+    var_dac = (uint16_t)dac_temp; 			// Convert from float to uint16_t
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
 
     // Ring buffer
-    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, &count, ringBufTrigger, 0.25, &readStart);
+    ringBufVar1 = ((float)Vq * (float)RING_BUF_SCALING);
+    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, &ringBufVar1, ringBufTrigger, 0.25, &readStart);
 
 
 
@@ -694,7 +705,7 @@ void sine_phaseB()
 //                  uint16_t *circularBuffer: Pointer to circular buffer array
 //                  uint16_t readStart: starting index of the circular buffer
 //  Returns     :	none
-uint8_t printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t readStart) {
+uint8_t printRingBuf(uint16_t bufferSize, int16_t *circularBuffer, uint16_t readStart) {
     static uint16_t readIndex   =   0;
     static uint8_t init         =   0;
 
@@ -719,7 +730,6 @@ uint8_t printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t rea
     	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
     							(uint32_t)&huart2.Instance->DR, strlen(msg));
 		*/
-
 
         readIndex++;
         if (readIndex > bufferSize) {

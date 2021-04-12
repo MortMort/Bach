@@ -89,7 +89,7 @@ void circular_buffer(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t *da
 //                  uint8_t event: A flag which, when triggered, sets the ring buffer to fill the last 1-bufSplit% of the buffer
 //                  float bufSplit: The precentage of the buffer which is kept in the ring buffer after event trigger.
 //  Returns     :   *readStart: Where to starte reading the ring buffer
-uint8_t circular_buffer(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t *dataInput, uint8_t event, float bufSplit, uint16_t *readStart)
+uint8_t circular_buffer(uint16_t bufferSize, int16_t *circularBuffer, int16_t *dataInput, uint8_t event, float bufSplit, uint16_t *readStart)
 {
     static uint16_t writeIndex	        =	0;	// Index of the write pointer
     static uint16_t bufferLength	    =	0;	// Number of values in circular buffer
