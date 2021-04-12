@@ -77,7 +77,8 @@ DMA_HandleTypeDef hdma_usart2_tx;
 uint16_t adcBuf[adcBuf_LEN];
 uint16_t readStart;
 
-int16_t ringBuf[RING_BUF_LEN];
+int16_t ringBuf[RING_BUF_LEN][4];
+int16_t ringBufData[4];
 uint16_t adcValue1;
 uint16_t adcValue2;
 
@@ -90,10 +91,6 @@ float phaseError, anglePllComp, anglePll;
 float ki = 2938.8889;
 float kp = 106.0408611;
 float kPhi = 0.010;
-
-// Simulation sine arrays
-float sine1[(int)(F_SAMPLE*T_SINE)];
-float sine2[(int)(F_SAMPLE*T_SINE)];
 
 uint8_t ringBufTrigger = 0;
 uint8_t ringBufFlag	= 0;
@@ -118,9 +115,7 @@ static void MX_ADC2_Init(void);
 // USART DMA implementation: Interrupt definition
 //void DMATransferComplete(DMA_HandleTypeDef *hdma);
 
-void sine_phaseA();
-void sine_phaseB();
-uint8_t printRingBuf(uint16_t bufferSize, int16_t *circularBuffer, uint16_t readStart);
+uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][4], uint16_t readStart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -135,9 +130,6 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t *circularBuffer, uint16_t read
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  // Sine creator test:
-  sine_phaseA();
-  sine_phaseB();
 
 
   //	huart2.Instance->CR3 |= USART_CR3_DMAT;
@@ -573,11 +565,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static uint16_t var_dac;		// Dac output variable
     static float dac_temp;			// Temporary float for dac output
 
-    static int16_t ringBufVar1;
-    static int16_t ringBufVar2;
-    static int16_t ringBufVar3;
-    static int16_t ringBufVar4;
-
     // PLL variables start
     // Variables declared globally for easier debugging.
     //    static float angleDq, alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
@@ -655,9 +642,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
 
     // Ring buffer
-    ringBufVar1 = ((float)Vq * (float)RING_BUF_SCALING);
-    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, &ringBufVar1, ringBufTrigger, 0.25, &readStart);
+    ringBufData[0] = ((float)Vq * (float)RING_BUF_SCALING);
+    ringBufData[1] = ((float)Vd * (float)RING_BUF_SCALING);
+    ringBufData[2] = ((float)alpha1 * (float)RING_BUF_SCALING);
+    ringBufData[3] = ((float)beta1 * (float)RING_BUF_SCALING);
 
+    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger, 0.25, &readStart);
 
 
 
@@ -677,35 +667,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-void sine_phaseA()
-{
-	// Create 50 Hz sine with 0 phase shift
-	uint32_t var;
-	for (var = 0; var < (F_SAMPLE*T_SINE); ++var)
-	{
-		sine1[var] = sinf(50.0 * (float)var * 1/F_SAMPLE * TWO_PI);
-	}
-}
-
-void sine_phaseB()
-{
-	// Create 50 Hz sine with 120 deg phase shift
-	uint32_t var;
-	for (var = 0; var < (F_SAMPLE*T_SINE); ++var)
-	{
-		sine2[var] = sinf(50.0 * (float)var * 1/F_SAMPLE * TWO_PI - 120 * PI/180);
-	}
-}
-
-
 
 //  Function    :   printRingBuf
 //  Description :   prints the ring buffer values
 //  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
-//                  uint16_t *circularBuffer: Pointer to circular buffer array
+//                  uint16_t circularBuffer: Pointer to circular buffer array
 //                  uint16_t readStart: starting index of the circular buffer
 //  Returns     :	none
-uint8_t printRingBuf(uint16_t bufferSize, int16_t *circularBuffer, uint16_t readStart) {
+uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][4], uint16_t readStart) {
     static uint16_t readIndex   =   0;
     static uint8_t init         =   0;
 
@@ -721,7 +690,10 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t *circularBuffer, uint16_t read
     {
         //printf("Buffervalue at index [%d] = %d\n", readIndex, circularBuffer[readIndex]);
 
-    	sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
+    	sprintf(msg, "%d, %d, %d, %d\r\n", circularBuffer[readIndex][0], circularBuffer[readIndex][1],
+									circularBuffer[readIndex][2], circularBuffer[readIndex][3]);	// Update message for usart print
+
+    	// sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
 
 
     	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
