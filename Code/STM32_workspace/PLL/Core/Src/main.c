@@ -22,13 +22,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-  #include <stdio.h>
-  #include <string.h>
+#include <stdio.h>
+#include <string.h>
 #include <math.h>
+
 #include "MAF.h"
 #include "PLL.h"
-#include "sine_creator.h"
-#include "../../Our/include/two_to_three_phase.h"
+#include "our_library.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,15 +39,15 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// Size of ADC buffer
-#define adcBuf_LEN 10
-//#define PI 3.14159265359
-#define PI 3.14159265358979323846
-#define TWO_PI 2*PI
-#define F_RAD 50*TWO_PI
-#define F_SAMPLE 1000
-//#define T_SAMPLE 1/F_SAMPLE
-#define T_SAMPLE 0.001
+
+#define adcBuf_LEN 		10									// Size of ADC buffer (unused)
+#define RING_BUF_LEN 	2000								// Size of ring buffer
+#define PI 				(3.1415926535897)
+#define TWO_PI 			(2.0*PI)
+#define F_RAD 			(50.0f*3.1415926535897f)
+#define F_SAMPLE 		1000
+#define T_SAMPLE 		0.001f
+#define T_SINE 			1.0f								// [s] sine time
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -68,16 +68,15 @@ UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-// USART DMA implementation: Interrupt definition
-//void DMATransferComplete(DMA_HandleTypeDef *hdma);
-void sine_creator2();
-void sine_creator3();
+
 
 // ADC & DAC DMA buffer
 uint16_t adcBuf[adcBuf_LEN];
+uint16_t readStart;
+
+uint16_t ringBuf[RING_BUF_LEN];
 uint16_t adcValue1;
 uint16_t adcValue2;
-
 
 float phaseA, phaseB, phaseC, angleDq;
 
@@ -89,8 +88,13 @@ float ki = 2938.8889;
 float kp = 106.0408611;
 float kPhi = 0.010;
 
-float sine1[F_SAMPLE];
-float sine2[F_SAMPLE];
+// Simulation sine arrays
+float sine1[(int)(F_SAMPLE*T_SINE)];
+float sine2[(int)(F_SAMPLE*T_SINE)];
+
+uint8_t ringBufTrigger = 0;
+uint8_t ringBufFlag	= 0;
+uint8_t ringBufPrintDone = 0;
 
 // File opening pointer
 //FILE *fpt;
@@ -108,6 +112,12 @@ static void MX_DAC_Init(void);
 static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
+// USART DMA implementation: Interrupt definition
+//void DMATransferComplete(DMA_HandleTypeDef *hdma);
+
+void sine_phaseA();
+void sine_phaseB();
+uint8_t printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t readStart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,8 +133,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
   // Sine creator test:
-  sine_creator2();
-  sine_creator3();
+  sine_phaseA();
+  sine_phaseB();
 
 
   //	huart2.Instance->CR3 |= USART_CR3_DMAT;
@@ -182,7 +192,9 @@ int main(void)
   while (1)
   {
 
-
+	if (ringBufFlag && !ringBufPrintDone) {
+		ringBufPrintDone = printRingBuf(RING_BUF_LEN, ringBuf, readStart);
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -206,12 +218,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
@@ -399,7 +410,7 @@ static void MX_TIM10_Init(void)
   htim10.Instance = TIM10;
   htim10.Init.Prescaler = 180-1;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 1000-1 ;
+  htim10.Init.Period = 1000-1;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
@@ -487,6 +498,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -557,7 +569,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static uint16_t count; 			// Counter for sine output
     static uint16_t var_dac;		// Dac output variable
     static float dac_temp;			// Temporary float for dac output
-//    static uint8_t temp;
 
     // PLL variables start
     // Variables declared globally for easier debugging.
@@ -566,13 +577,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	// Set pin: Start timer
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-
-//    if (temp == 0)
-//    {
-//    	fpt = fopen("qqqqqq.csv", "w+");
-//    	fprintf(fpt,"Vd, Vq, alpha1, beta1\n");
-//    	temp = 1;
-//    }
 
     // ADC 1
     HAL_ADC_Start(&hadc1);
@@ -601,6 +605,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg_2,
 //						(uint32_t)&huart2.Instance->DR, strlen(msg_2));
 
+    // Ring buffer trigger test
+    if (count == 450) {
+    	ringBufTrigger = 1;
+    }
+
     // PLL StartT_SAMPLE
     //--------------------------------------------------------------------------------------------
     angleDq = angleDq + T_SAMPLE*F_RAD;
@@ -626,31 +635,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     anglePll = pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
     anglePllComp = pi_regulator_comp(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
-    // anglePll = pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE);
     //--------------------------------------------------------------------------------------------
     // PLL End
 
     // DAC
-    dac_temp = (alpha1 + 1) * 4096.0/4.0; // +1 for offset, /4 for scaling
+    dac_temp = (phaseA + 1) * 4096.0/4.0; // +1 for offset, /4 for scaling
     var_dac = (uint16_t)dac_temp; //
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
 
+    // Ring buffer
+    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, &count, ringBufTrigger, 0.25, &readStart);
 
-	if (count < F_SAMPLE)
+
+
+
+    // Count up to size of sine array
+	if (count < (F_SAMPLE*T_SINE))
 	{
 	  count++;
 	}
 	else
 	{
 	  count = 0;
-//	  fclose(fpt);
-//	  temp = 2;
 	}
-//	if (temp == 1)
-//	{
-//		fprintf(fpt, "%0.3f, %0.3f, %0.3f, %0.3f\n", Vd, Vq, alpha1, beta1);
-//	}
 
 
 	// Reset pin: Stop timer
@@ -658,26 +666,69 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-void sine_creator2()
+void sine_phaseA()
 {
 	// Create 50 Hz sine with 0 phase shift
 	uint32_t var;
-	for (var = 0; var < F_SAMPLE; ++var)
+	for (var = 0; var < (F_SAMPLE*T_SINE); ++var)
 	{
 		sine1[var] = sinf(50.0 * (float)var * 1/F_SAMPLE * TWO_PI);
 	}
 }
 
-void sine_creator3()
+void sine_phaseB()
 {
 	// Create 50 Hz sine with 120 deg phase shift
 	uint32_t var;
-	for (var = 0; var < F_SAMPLE; ++var)
+	for (var = 0; var < (F_SAMPLE*T_SINE); ++var)
 	{
 		sine2[var] = sinf(50.0 * (float)var * 1/F_SAMPLE * TWO_PI - 120 * PI/180);
 	}
 }
 
+
+
+//  Function    :   printRingBuf
+//  Description :   prints the ring buffer values
+//  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
+//                  uint16_t *circularBuffer: Pointer to circular buffer array
+//                  uint16_t readStart: starting index of the circular buffer
+//  Returns     :	none
+uint8_t printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t readStart) {
+    static uint16_t readIndex   =   0;
+    static uint8_t init         =   0;
+
+    static char msg[20];	// Initialize string to be written to USART
+
+    // Initialize readIndex to readStart
+    if (!init) {
+        readIndex = readStart;
+        init = 1;
+    }
+
+    for (int i = 0; i < bufferSize; i++)
+    {
+        //printf("Buffervalue at index [%d] = %d\n", readIndex, circularBuffer[readIndex]);
+
+    	sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
+
+
+    	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+    	/*
+    	huart2.Instance->CR3 |= USART_CR3_DMAT;
+    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
+    							(uint32_t)&huart2.Instance->DR, strlen(msg));
+		*/
+
+
+        readIndex++;
+        if (readIndex > bufferSize) {
+            readIndex = 0;
+        }
+    }
+    return 1;
+
+}
 
 
 /* USER CODE END 4 */

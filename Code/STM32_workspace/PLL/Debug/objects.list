@@ -28,5 +28,4 @@
 "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_adc.o"
 "Our/MAF.o"
 "Our/PLL.o"
-"Our/sine_creator.o"
-"Our/two_to_three_phase.o"
+"Our/our_library.o"
