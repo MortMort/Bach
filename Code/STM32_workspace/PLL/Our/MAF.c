@@ -5,8 +5,8 @@ float maf1(float nextSample) //float t is not supposed to be included in stm
 {
   static float sum;
   static int pos;
-  int len = 2000;
-  static float sampleArr[2000] = {0}; // tried parsing len instead of 200 but didnt work
+  int len = 20;
+  static float sampleArr[20] = {0}; // tried parsing len instead of 200 but didnt work
 
   sum = sum - sampleArr[pos] + nextSample;
   sampleArr[pos] = nextSample;
@@ -23,8 +23,8 @@ float maf2(float nextSample) //float t is not supposed to be included in stm
 {
   static float sum;
   static int pos;
-  int len = 2000;
-  static float sampleArr[2000] = {0}; // tried parsing len instead of 200 but didnt work
+  int len = 20;
+  static float sampleArr[20] = {0}; // tried parsing len instead of 200 but didnt work
 
   sum = sum - sampleArr[pos] + nextSample;
   sampleArr[pos] = nextSample;

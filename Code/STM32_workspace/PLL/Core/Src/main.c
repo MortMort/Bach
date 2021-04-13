@@ -77,15 +77,15 @@ DMA_HandleTypeDef hdma_usart2_tx;
 uint16_t adcBuf[adcBuf_LEN];
 uint16_t readStart;
 
-int16_t ringBuf[RING_BUF_LEN][4];
-int16_t ringBufData[4];
+int16_t ringBuf[RING_BUF_LEN][17];
+int16_t ringBufData[17];
 uint16_t adcValue1;
 uint16_t adcValue2;
 
 float phaseA, phaseB, phaseC, angleDq;
 
 // Declared in interrupt normally
-float alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
+float alpha1, beta1, Vq, Vd, VqMaf, VdMaf, alpha2, beta2, cosGrid, sinGrid;
 float phaseError, anglePllComp, anglePll;
 
 float ki = 2938.8889;
@@ -115,7 +115,7 @@ static void MX_ADC2_Init(void);
 // USART DMA implementation: Interrupt definition
 //void DMATransferComplete(DMA_HandleTypeDef *hdma);
 
-uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][4], uint16_t readStart);
+uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][17], uint16_t readStart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -622,8 +622,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     Vd = alphabeta_to_d(alpha1, beta1, angleDq);
     Vq = alphabeta_to_q(alpha1, beta1, angleDq);
 
-    alpha2 = dq_to_alpha(Vd, Vq, angleDq);
-    beta2 = dq_to_beta(Vd, Vq, angleDq);
+    VdMaf = maf1(Vd);
+	VqMaf = maf2(Vq);
+
+	alpha2 = dq_to_alpha(VdMaf, VqMaf, angleDq);
+	beta2 = dq_to_beta(VdMaf, VqMaf, angleDq);
+//    alpha2 = dq_to_alpha(Vd, Vq, angleDq);
+//    beta2 = dq_to_beta(Vd, Vq, angleDq);
 
     cosGrid = cos_grid(alpha2, beta2);
     sinGrid = sin_grid(alpha2, beta2);
@@ -642,10 +647,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
 
     // Ring buffer
-    ringBufData[0] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
-    ringBufData[1] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
-    ringBufData[2] = ((float)	angleDq 			* (float)RING_BUF_SCALING);
-    ringBufData[3] = ((float)	beta1 			* (float)RING_BUF_SCALING);
+//    ringBufData[0] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+//    ringBufData[1] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
+//    ringBufData[2] = ((float)	angleDq 		* (float)RING_BUF_SCALING);
+//    ringBufData[3] = ((float)	beta1 			* (float)RING_BUF_SCALING);
+    ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
+    ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
+    ringBufData[2] 	= ((float)	phaseC 			* (float)RING_BUF_SCALING);
+    ringBufData[3] 	= ((float)	alpha1 			* (float)RING_BUF_SCALING);
+    ringBufData[4] 	= ((float)	beta1 			* (float)RING_BUF_SCALING);
+    ringBufData[5] 	= ((float)	Vd 				* (float)RING_BUF_SCALING);
+    ringBufData[6] 	= ((float)	Vq				* (float)RING_BUF_SCALING);
+    ringBufData[7] 	= ((float)	VdMaf 			* (float)RING_BUF_SCALING);
+    ringBufData[8] 	= ((float)	VqMaf 			* (float)RING_BUF_SCALING);
+    ringBufData[9] 	= ((float)	alpha2 			* (float)RING_BUF_SCALING);
+    ringBufData[10] = ((float)	beta2			* (float)RING_BUF_SCALING);
+    ringBufData[11] = ((float)	cosGrid			* (float)RING_BUF_SCALING);
+    ringBufData[12] = ((float)	sinGrid 		* (float)RING_BUF_SCALING);
+    ringBufData[13] = ((float)	phaseError 		* (float)RING_BUF_SCALING);
+    ringBufData[14] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+    ringBufData[15] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
+    ringBufData[16] = ((float)	angleDq			* (float)RING_BUF_SCALING);
+
 
     ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger, 0.25, &readStart);
 
@@ -674,11 +697,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //                  uint16_t circularBuffer: Pointer to circular buffer array
 //                  uint16_t readStart: starting index of the circular buffer
 //  Returns     :	none
-uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][4], uint16_t readStart) {
+uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][17], uint16_t readStart) {
     static uint16_t readIndex   =   0;
     static uint8_t init         =   0;
 
-    static char msg[40];	// Initialize string to be written to USART
+    static char msg[150];	// Initialize string to be written to USART
 
     // Initialize readIndex to readStart
     if (!init) {
@@ -686,12 +709,25 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][4], uint16_t 
         init = 1;
     }
 
+	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
+	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+
+
     for (int i = 0; i < bufferSize; i++)
     {
         //printf("Buffervalue at index [%d] = %d\n", readIndex, circularBuffer[readIndex]);
 
-    	sprintf(msg, "%d, %d, %d, %d\r\n", circularBuffer[readIndex][0], circularBuffer[readIndex][1],
-									circularBuffer[readIndex][2], circularBuffer[readIndex][3]);	// Update message for usart print
+//    	sprintf(msg, "%d, %d, %d, %d\r\n", circularBuffer[readIndex][0], circularBuffer[readIndex][1],
+//									circularBuffer[readIndex][2], circularBuffer[readIndex][3]);	// Update message for usart print
+    	sprintf(msg, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\r\n",
+											circularBuffer[readIndex][0], 	circularBuffer[readIndex][1],
+											circularBuffer[readIndex][2], 	circularBuffer[readIndex][3],
+											circularBuffer[readIndex][4], 	circularBuffer[readIndex][5],
+											circularBuffer[readIndex][6], 	circularBuffer[readIndex][7],
+											circularBuffer[readIndex][8], 	circularBuffer[readIndex][9],
+											circularBuffer[readIndex][10], 	circularBuffer[readIndex][11],
+											circularBuffer[readIndex][12], 	circularBuffer[readIndex][13],
+											circularBuffer[readIndex][14], 	circularBuffer[readIndex][15], circularBuffer[readIndex][16]);	// Update message for usart print
 
     	// sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
 
