@@ -7,3 +7,5 @@
 #define T_SAMPLE 			0.001f
 #define T_SINE 				1.0f								// [s] sine time
 #define RAD_120				120.0f*3.1415926535897f/180.0f
+//#define RING_BUF_SCALING	0xFFFF/(2*TWO_PI)	// 5215.2
+#define RING_BUF_SCALING	5000				// Lower than above for protection against noise

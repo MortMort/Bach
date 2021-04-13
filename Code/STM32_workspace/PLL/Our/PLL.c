@@ -1,6 +1,9 @@
 // this file contains all the functions of PLL.
 #include <math.h>
-#include "INCLUDES.c"
+#include "CONSTANTS.h"
+
+// Constants
+
 
 float abc_to_alpha(float a, float b, float c)
 {

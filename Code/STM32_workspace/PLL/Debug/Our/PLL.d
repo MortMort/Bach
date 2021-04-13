@@ -1,3 +1,4 @@
-Our/PLL.o: ../Our/PLL.c ../Our/INCLUDES.c
+Our/PLL.o: ../Our/PLL.c \
+ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h
 
-../Our/INCLUDES.c:
+C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h:

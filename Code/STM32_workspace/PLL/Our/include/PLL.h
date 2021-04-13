@@ -1,6 +1,4 @@
 // this file contains prototypes of functions of PLL.
-
-
 float abc_to_alpha(float a, float b, float c);
 float abc_to_beta(float a, float b, float c);
 float alphabeta_to_d(float alpha, float beta, float angle);
