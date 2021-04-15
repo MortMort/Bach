@@ -35,6 +35,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/MAF.h \
  C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/PLL.h \
  C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/our_library.h \
+ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h \
  C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h
 
 ../Core/Inc/main.h:
@@ -110,5 +111,7 @@ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/MAF.h:
 C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/PLL.h:
 
 C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/our_library.h:
+
+C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h:
 
 C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h:
