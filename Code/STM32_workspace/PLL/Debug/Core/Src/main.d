@@ -32,9 +32,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- C:/Users/Kasper\ Laustsen/Documents/GitHub/Bach/Code/STM32_workspace/PLL/Our/include/MAF.h \
- C:/Users/Kasper\ Laustsen/Documents/GitHub/Bach/Code/STM32_workspace/PLL/Our/include/PLL.h \
- C:/Users/Kasper\ Laustsen/Documents/GitHub/Bach/Code/STM32_workspace/PLL/Our/include/our_library.h
+ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/MAF.h \
+ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/PLL.h \
+ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/our_library.h \
+ C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h
 
 ../Core/Inc/main.h:
 
@@ -104,8 +105,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 
-C:/Users/Kasper\ Laustsen/Documents/GitHub/Bach/Code/STM32_workspace/PLL/Our/include/MAF.h:
+C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/MAF.h:
 
-C:/Users/Kasper\ Laustsen/Documents/GitHub/Bach/Code/STM32_workspace/PLL/Our/include/PLL.h:
+C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/PLL.h:
 
-C:/Users/Kasper\ Laustsen/Documents/GitHub/Bach/Code/STM32_workspace/PLL/Our/include/our_library.h:
+C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/our_library.h:
+
+C:/Users/Martin/Documents/Git/Bach/Code/STM32_workspace/PLL/Our/include/CONSTANTS.h:

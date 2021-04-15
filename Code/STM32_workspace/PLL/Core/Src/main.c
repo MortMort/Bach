@@ -29,6 +29,8 @@
 #include "MAF.h"
 #include "PLL.h"
 #include "our_library.h"
+
+#include "CONSTANTS.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,18 +41,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-
-#define adcBuf_LEN 			10									// Size of ADC buffer (unused)
-#define RING_BUF_LEN 		2000								// Size of ring buffer
-#define PI 					(3.1415926535897)
-#define TWO_PI 				(2.0*PI)
-#define F_RAD 				(50.0f*3.1415926535897f*2.0f)
-#define F_SAMPLE 			1000
-#define T_SAMPLE 			0.001f
-#define T_SINE 				1.0f								// [s] sine time
-#define RAD_120				120.0f*3.1415926535897f/180.0f
-//#define RING_BUF_SCALING	0xFFFF/(2*TWO_PI)	// 5215.2
-#define RING_BUF_SCALING	5000				// Lower than above for protection against noise
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,6 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
+ADC_HandleTypeDef hadc3;
 DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac;
@@ -79,8 +70,7 @@ uint16_t readStart;
 
 int16_t ringBuf[RING_BUF_LEN][17];
 int16_t ringBufData[17];
-uint16_t adcValue1;
-uint16_t adcValue2;
+uint16_t adcValue1, adcValue2, adcValue3;
 
 float phaseA, phaseB, phaseC, angleDq;
 
@@ -110,6 +100,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_DAC_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_ADC3_Init(void);
 /* USER CODE BEGIN PFP */
 
 // USART DMA implementation: Interrupt definition
@@ -165,6 +156,7 @@ int main(void)
   MX_TIM10_Init();
   MX_DAC_Init();
   MX_ADC2_Init();
+  MX_ADC3_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -348,6 +340,56 @@ static void MX_ADC2_Init(void)
 }
 
 /**
+  * @brief ADC3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC3_Init(void)
+{
+
+  /* USER CODE BEGIN ADC3_Init 0 */
+
+  /* USER CODE END ADC3_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC3_Init 1 */
+
+  /* USER CODE END ADC3_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc3.Instance = ADC3;
+  hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc3.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc3.Init.ScanConvMode = DISABLE;
+  hadc3.Init.ContinuousConvMode = ENABLE;
+  hadc3.Init.DiscontinuousConvMode = DISABLE;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc3.Init.NbrOfConversion = 1;
+  hadc3.Init.DMAContinuousRequests = DISABLE;
+  hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC3_Init 2 */
+
+  /* USER CODE END ADC3_Init 2 */
+
+}
+
+/**
   * @brief DAC Initialization Function
   * @param None
   * @retval None
@@ -494,6 +536,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -563,7 +606,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     static uint16_t count; 			// Counter for sine output
     static uint16_t var_dac;		// Dac output variable
-    static float dac_temp;			// Temporary float for dac output
+    static float var_dac_f;			// Temporary float for dac output
 
     // PLL variables start
     // Variables declared globally for easier debugging.
@@ -585,19 +628,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     adcValue2 = HAL_ADC_GetValue(&hadc2);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
+    HAL_ADC_Start(&hadc3);
+    HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY);
+    adcValue3 = HAL_ADC_GetValue(&hadc3);
+
+
 //    phaseA = (float)adcValue1/(0xFFF+1);
 //    phaseB = (float)adcValue2/(0xFFF+1);
-//    phaseC = two_to_three_phase(&phaseA, &phaseB);
+//    phaseC = (float)adcValue3/(0xFFF+1);
 
 
-
-
-	// USART DMA implementation
-//	huart2.Instance->CR3 |= USART_CR3_DMAT;
-//	adcReading0 = adcBuf[0];
-//	sprintf(msg_2, "Adc reading: %u\r\n", adcReading0);	// Update message for usart print
-//	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg_2,
-//						(uint32_t)&huart2.Instance->DR, strlen(msg_2));
 
     // Ring buffer trigger test
     if (count == 450) {
