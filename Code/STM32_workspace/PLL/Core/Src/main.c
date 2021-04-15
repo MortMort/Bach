@@ -55,6 +55,7 @@ ADC_HandleTypeDef hadc3;
 
 DAC_HandleTypeDef hdac;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart2;
@@ -66,8 +67,19 @@ DMA_HandleTypeDef hdma_usart2_tx;
 // ADC & DAC DMA buffer
 uint16_t readStart;
 
+// Ring buffer
 int16_t ringBuf[RING_BUF_LEN][RING_BUF_SIZE];
 int16_t ringBufData[RING_BUF_SIZE];
+
+uint8_t ringBufTrigger = 0;		// Triggers the ring buffer
+uint8_t ringBufFlag	= 0;		// Goes high when the ring buffer is done filling the buffer after trigger
+uint8_t ringBufPrintDone = 0;	// Goes high when printing of ring buffer is done, so usart isn't called again
+
+// Execution time, time taking
+int16_t timingArray[10];
+int16_t timer_temp;
+
+
 uint16_t adcValue1, adcValue2, adcValue3;
 
 float phaseA, phaseB, phaseC, angleDq;
@@ -76,20 +88,17 @@ float phaseA, phaseB, phaseC, angleDq;
 float alpha1, beta1, Vq, Vd, VqMaf, VdMaf, alpha2, beta2, cosGrid, sinGrid;
 float phaseError, anglePllComp, anglePll;
 
-// T_st = 0.02 * 6
+// T_st = 0.02 * 6:
 //float ki = 2938.8889;
 //float kp = 106.0408611;
 //float kPhi = 0.010;
 
-// T_st = 0.02 * 1
+// T_st = 0.02 * 1:
 float ki = 105800;
 float kp = 1465.1;
 float kPhi = 0.0095;
 
 
-uint8_t ringBufTrigger = 0;
-uint8_t ringBufFlag	= 0;
-uint8_t ringBufPrintDone = 0;
 
 // File opening pointer
 //FILE *fpt;
@@ -106,6 +115,7 @@ static void MX_TIM10_Init(void);
 static void MX_DAC_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_ADC3_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 // USART DMA implementation: Interrupt definition
@@ -162,6 +172,7 @@ int main(void)
   MX_DAC_Init();
   MX_ADC2_Init();
   MX_ADC3_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -176,6 +187,7 @@ int main(void)
 
   // Timer interrupt start
   HAL_TIM_Base_Start_IT(&htim10);
+  HAL_TIM_Base_Start(&htim1);
 
   /* USER CODE END 2 */
 
@@ -433,6 +445,52 @@ static void MX_DAC_Init(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 18-1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65536-1;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
   * @brief TIM10 Initialization Function
   * @param None
   * @retval None
@@ -550,6 +608,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin : PC3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PA5 */
   GPIO_InitStruct.Pin = GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -616,8 +680,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// Set pin: Start timer
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 
-
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
+
     // ADC 1
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
@@ -628,11 +693,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_ADC_PollForConversion(&hadc2, HAL_MAX_DELAY);
     adcValue2 = HAL_ADC_GetValue(&hadc2);
 
-
 	// ADC 3
     HAL_ADC_Start(&hadc3);
     HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY);
     adcValue3 = HAL_ADC_GetValue(&hadc3);
+    timingArray[0] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
@@ -640,14 +705,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //    phaseB = (float)adcValue2/(0xFFF+1);
 //    phaseC = (float)adcValue3/(0xFFF+1);
 
-
-
-    // Ring buffer trigger test
-    if (count == 450) {
-    	ringBufTrigger = 1;
-    }
-
-    // PLL StartT_SAMPLE
+    // PLL Start
     //--------------------------------------------------------------------------------------------
     angleDq = angleDq + T_SAMPLE*F_RAD;
     if (angleDq > TWO_PI)
@@ -655,66 +713,84 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     	angleDq = angleDq - TWO_PI;
     }
 
+
+    // Create simulation thrre phase
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
     phaseA = sinf(angleDq);
 	phaseB = sinf(angleDq-RAD_120);
 //	phaseC = two_to_three_phase(&phaseA, &phaseB);
 	phaseC = sinf(angleDq+RAD_120);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+	timingArray[1] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
+	// abc -> alpha beta
+	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     abc_to_alphabeta(phaseA, phaseB, phaseC, &alpha1, &beta1);
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    timingArray[2] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
+    // alpha beta -> DQ
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     alphabeta_to_dq(alpha1, beta1, angleDq, &Vd, &Vq);
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    timingArray[3] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
+    // MAF
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
 	maf(&Vd, &Vq, &VdMaf, &VqMaf);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+	timingArray[4] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
+	// DQ -> alpha beta
+	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     dq_to_alphabeta(Vd, Vq, angleDq, &alpha2, &beta2);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+	timingArray[5] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
 
 //    alpha2 = dq_to_alpha(Vd, Vq, angleDq);
 //    beta2 = dq_to_beta(Vd, Vq, angleDq);
 
-
+	// sinGrid & cosGrid
+	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     cosGrid = cos_grid(alpha2, beta2);
     sinGrid = sin_grid(alpha2, beta2);
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    timingArray[6] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
+    // Phade detector
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     phaseError = phase_detector(cosGrid, sinGrid, anglePllComp);
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    timingArray[7] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
+    // PI-regulator
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE, &anglePll, &anglePllComp);
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    timingArray[8] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
 
     //--------------------------------------------------------------------------------------------
@@ -722,7 +798,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     // DAC
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-    var_dac_f = (Vd + 1.05) * 4096.0/3.3;	// +1 for offset for negative values, /3.3 for scaling
+    var_dac_f = (anglePll*0.5f + 0.05f) * 4096.0f/3.3f;	// +1 for offset for negative values, /3.3 for scaling
     var_dac = (uint16_t)var_dac_f; 			// Convert from float to uint16_t
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
@@ -750,19 +826,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     ringBufData[14] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
     ringBufData[15] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
     ringBufData[16] = ((float)	angleDq			* (float)RING_BUF_SCALING);
+    ringBufData[17] = timingArray[0];
+    ringBufData[18] = timingArray[1];
+    ringBufData[19] = timingArray[2];
+    ringBufData[20] = timingArray[3];
+    ringBufData[21] = timingArray[4];
+    ringBufData[22] = timingArray[5];
+    ringBufData[23] = timingArray[6];
+    ringBufData[24] = timingArray[7];
+    ringBufData[25] = timingArray[8];
+
+    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger, RING_BUF_SPLIT, &readStart);
 
 
-    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger, 0.25, &readStart);
 
-
-
-    // Count up to size of sine array
-	if (count < (1000))
+    // Count up interrupt count
+	if (count < (RING_BUF_LEN*RING_BUF_SPLIT))
 	{
 	  count++;
 	}
 	else
 	{
+	  ringBufTrigger = 1;
 	  count = 0;
 	}
 
@@ -783,7 +868,7 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE
     static uint16_t readIndex   =   0;
     static uint8_t init         =   0;
 
-    static char msg[150];	// Initialize string to be written to USART
+    static char msg[250];	// Initialize string to be written to USART
 
     // Initialize readIndex to readStart
     if (!init) {
@@ -791,7 +876,7 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE
         init = 1;
     }
 
-	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
+	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
 	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
 
@@ -801,7 +886,7 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE
 
 //    	sprintf(msg, "%d, %d, %d, %d\r\n", circularBuffer[readIndex][0], circularBuffer[readIndex][1],
 //									circularBuffer[readIndex][2], circularBuffer[readIndex][3]);	// Update message for usart print
-    	sprintf(msg, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\r\n",
+    	sprintf(msg, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\r\n",
 											circularBuffer[readIndex][0], 	circularBuffer[readIndex][1],
 											circularBuffer[readIndex][2], 	circularBuffer[readIndex][3],
 											circularBuffer[readIndex][4], 	circularBuffer[readIndex][5],
@@ -809,7 +894,12 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE
 											circularBuffer[readIndex][8], 	circularBuffer[readIndex][9],
 											circularBuffer[readIndex][10], 	circularBuffer[readIndex][11],
 											circularBuffer[readIndex][12], 	circularBuffer[readIndex][13],
-											circularBuffer[readIndex][14], 	circularBuffer[readIndex][15], circularBuffer[readIndex][16]);	// Update message for usart print
+											circularBuffer[readIndex][14], 	circularBuffer[readIndex][15],
+											circularBuffer[readIndex][16], circularBuffer[readIndex][17],
+											circularBuffer[readIndex][18], circularBuffer[readIndex][19],
+											circularBuffer[readIndex][20], circularBuffer[readIndex][21],
+											circularBuffer[readIndex][22], circularBuffer[readIndex][23],
+											circularBuffer[readIndex][24], circularBuffer[readIndex][25]);	// Update message for usart print
 
     	// sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
 
