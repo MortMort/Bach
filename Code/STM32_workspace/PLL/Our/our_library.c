@@ -98,6 +98,7 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
     static uint8_t  eventEntry          =   0;
     static uint8_t  bufferFullEntry     =   0;
     static uint8_t	bufferDoneFlag		=	0;
+    static uint8_t	eventLatch			=	0; // Latches upon event flag going high and resets when buffer is full
 
     // If the buffer has been filled, the oldest sample is always in the NEXT index
     // else it is equal to 0;
@@ -111,11 +112,15 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
         }
     } */
 
+    if (event) {
+    	eventLatch = 1;
+    }
+
     if (bufferLength == bufferSize) {
         *readStart = writeIndex;
     }
 
-    if (event) {
+    if (eventLatch) {
         if (!eventEntry) {
             // Event has triggered
             bufferSplitLength = bufSplit * bufferSize;
@@ -129,6 +134,7 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
                 bufferFullEntry = 1;
             }
             // STOP
+            eventLatch = 0;
         }
         else {
         	for (int i = 0; i < RING_BUF_SIZE; ++i) {

@@ -1,5 +1,6 @@
 // This file contains functions that are associated with moving average filter
-#define MAF_LEN 20
+#include "CONSTANTS.h"
+
 
 
 void maf(float *nextSampleD, float *nextSampleQ, float *mafD, float *mafQ)
@@ -9,6 +10,9 @@ void maf(float *nextSampleD, float *nextSampleQ, float *mafD, float *mafQ)
 
 	sumD = sumD - sampleArrD[pos] + *nextSampleD;
 	sumQ = sumQ - sampleArrQ[pos] + *nextSampleQ;
+
+	sampleArrD[pos] = *nextSampleD;
+	sampleArrQ[pos] = *nextSampleQ;
 
 	pos++;
 	if (pos >= MAF_LEN) {

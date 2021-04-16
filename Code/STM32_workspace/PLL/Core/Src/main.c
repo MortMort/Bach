@@ -71,7 +71,13 @@ uint16_t readStart;
 int16_t ringBuf[RING_BUF_LEN][RING_BUF_SIZE];
 int16_t ringBufData[RING_BUF_SIZE];
 
+uint16_t adcRingBuf1[ADC_RING_BUF_SIZE];
+uint16_t adcRingBuf2[ADC_RING_BUF_SIZE];
+uint16_t adcRingBuf3[ADC_RING_BUF_SIZE];
+
+
 uint8_t ringBufTrigger = 0;		// Triggers the ring buffer
+uint8_t	ringBufTrigger2 = 0;	// Triggers the ring buffer from the gpio input
 uint8_t ringBufFlag	= 0;		// Goes high when the ring buffer is done filling the buffer after trigger
 uint8_t ringBufPrintDone = 0;	// Goes high when printing of ring buffer is done, so usart isn't called again
 
@@ -121,7 +127,8 @@ static void MX_TIM1_Init(void);
 // USART DMA implementation: Interrupt definition
 //void DMATransferComplete(DMA_HandleTypeDef *hdma);
 
-uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], uint16_t readStart);
+uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], uint16_t readStart);
+uint8_t print_ring_buf_v2(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], uint16_t readStart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -195,9 +202,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_3)){
+		ringBufTrigger2 = 1;
+	}
+
+	// Rest from button
+	if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)) {
+		ringBufTrigger2 = 0;
+		ringBufPrintDone = 0;
+	}
+
 
 	if (ringBufFlag && !ringBufPrintDone) {
-		ringBufPrintDone = printRingBuf(RING_BUF_LEN, ringBuf, readStart);
+		ringBufPrintDone = print_ring_buf_v2(RING_BUF_LEN, ringBuf, readStart);
 	}
     /* USER CODE END WHILE */
 
@@ -279,7 +296,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -329,7 +346,7 @@ static void MX_ADC2_Init(void)
   hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc2.Init.Resolution = ADC_RESOLUTION_12B;
   hadc2.Init.ScanConvMode = DISABLE;
-  hadc2.Init.ContinuousConvMode = ENABLE;
+  hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
   hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -379,7 +396,7 @@ static void MX_ADC3_Init(void)
   hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B;
   hadc3.Init.ScanConvMode = DISABLE;
-  hadc3.Init.ContinuousConvMode = ENABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
   hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -510,7 +527,7 @@ static void MX_TIM10_Init(void)
   htim10.Instance = TIM10;
   htim10.Init.Prescaler = 180-1;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 1000-1;
+  htim10.Init.Period = 500-1;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
@@ -594,8 +611,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -608,10 +625,16 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PC3 */
   GPIO_InitStruct.Pin = GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA5 */
@@ -699,11 +722,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     adcValue3 = HAL_ADC_GetValue(&hadc3);
     timingArray[0] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
+
+
+
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
-//    phaseA = (float)adcValue1/(0xFFF+1);
-//    phaseB = (float)adcValue2/(0xFFF+1);
-//    phaseC = (float)adcValue3/(0xFFF+1);
+
+    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
+
+    phaseA = (float)adcValue1/(0xFFF+1)*3.3f - 1.65f;
+    phaseB = (float)adcValue2/(0xFFF+1)*3.3f - 1.65f;
+    phaseC = (float)adcValue3/(0xFFF+1)*3.3f - 1.65f;
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    timingArray[1] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
     // PLL Start
     //--------------------------------------------------------------------------------------------
@@ -714,15 +747,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
 
-    // Create simulation thrre phase
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-    phaseA = sinf(angleDq);
-	phaseB = sinf(angleDq-RAD_120);
-//	phaseC = two_to_three_phase(&phaseA, &phaseB);
-	phaseC = sinf(angleDq+RAD_120);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-	timingArray[1] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
+    // Create simulation three phase
+//    phaseA = sinf(angleDq);
+//	phaseB = sinf(angleDq-RAD_120);
+//	phaseC = sinf(angleDq+RAD_120);
+
 
 	// abc -> alpha beta
 	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
@@ -745,7 +774,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // MAF
     timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
+//    maf(&phaseA, &phaseB, &VdMaf, &VqMaf);
 	maf(&Vd, &Vq, &VdMaf, &VqMaf);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
@@ -761,15 +790,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	timingArray[5] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
 
-//    alpha2 = dq_to_alpha(Vd, Vq, angleDq);
-//    beta2 = dq_to_beta(Vd, Vq, angleDq);
-
 	// sinGrid & cosGrid
 	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
-    cosGrid = cos_grid(alpha2, beta2);
-    sinGrid = sin_grid(alpha2, beta2);
+    cos_sin_grid(alpha2, beta2, &cosGrid, &sinGrid);
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
     timingArray[6] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
@@ -805,10 +830,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
     // Ring buffer
-//    ringBufData[0] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
-//    ringBufData[1] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
-//    ringBufData[2] = ((float)	angleDq 		* (float)RING_BUF_SCALING);
-//    ringBufData[3] = ((float)	beta1 			* (float)RING_BUF_SCALING);
+    /*
+    ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
+    ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
+    ringBufData[2] 	= ((float)	phaseC 			* (float)RING_BUF_SCALING);
+    ringBufData[3] 	= ((float)	VdMaf 			* (float)RING_BUF_SCALING);
+    ringBufData[4] 	= ((float)	VqMaf 			* (float)RING_BUF_SCALING);
+    ringBufData[5] = ((float)	cosGrid			* (float)RING_BUF_SCALING);
+    ringBufData[6] = ((float)	sinGrid 		* (float)RING_BUF_SCALING);
+    ringBufData[7] = ((float)	phaseError 		* (float)RING_BUF_SCALING);
+    ringBufData[8] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+    ringBufData[9] = ((float)	angleDq			* (float)RING_BUF_SCALING);
+	*/
+
+    // Ring buffer
     ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
     ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
     ringBufData[2] 	= ((float)	phaseC 			* (float)RING_BUF_SCALING);
@@ -826,17 +861,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     ringBufData[14] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
     ringBufData[15] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
     ringBufData[16] = ((float)	angleDq			* (float)RING_BUF_SCALING);
-    ringBufData[17] = timingArray[0];
-    ringBufData[18] = timingArray[1];
-    ringBufData[19] = timingArray[2];
-    ringBufData[20] = timingArray[3];
-    ringBufData[21] = timingArray[4];
-    ringBufData[22] = timingArray[5];
-    ringBufData[23] = timingArray[6];
-    ringBufData[24] = timingArray[7];
-    ringBufData[25] = timingArray[8];
 
-    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger, RING_BUF_SPLIT, &readStart);
+    // Timing:
+//    ringBufData[17] = timingArray[0];
+//    ringBufData[18] = timingArray[1];
+//    ringBufData[19] = timingArray[2];
+//    ringBufData[20] = timingArray[3];
+//    ringBufData[21] = timingArray[4];
+//    ringBufData[22] = timingArray[5];
+//    ringBufData[23] = timingArray[6];
+//    ringBufData[24] = timingArray[7];
+//    ringBufData[25] = timingArray[8];
+
+    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger2, RING_BUF_SPLIT, &readStart);
 
 
 
@@ -858,13 +895,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 
-//  Function    :   printRingBuf
+//  Function    :   print_ring_buf
 //  Description :   prints the ring buffer values
 //  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
 //                  uint16_t circularBuffer: Pointer to circular buffer array
 //                  uint16_t readStart: starting index of the circular buffer
 //  Returns     :	none
-uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], uint16_t readStart) {
+uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], uint16_t readStart) {
     static uint16_t readIndex   =   0;
     static uint8_t init         =   0;
 
@@ -911,6 +948,83 @@ uint8_t printRingBuf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE
     							(uint32_t)&huart2.Instance->DR, strlen(msg));
 		*/
 
+        readIndex++;
+        if (readIndex > bufferSize) {
+            readIndex = 0;
+        }
+    }
+    return 1;
+
+}
+
+//  Function    :   print_ring_buf
+//  Description :   prints the ring buffer values
+//  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
+//                  uint16_t circularBuffer: Pointer to circular buffer array
+//                  uint16_t readStart: starting index of the circular buffer
+//  Returns     :	none
+uint8_t print_ring_buf_v2(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], uint16_t readStart) {
+    static uint16_t readIndex   =   0;
+    static uint8_t init         =   0;
+    static uint16_t pos			=	0;		// Track position of array
+
+    static char msg[250];	// Initialize string to be written to USART
+
+    // Initialize readIndex to readStart
+    if (!init) {
+        readIndex = readStart;
+        init = 1;
+    }
+
+//	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
+    sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
+//    sprintf(msg, "phaseA, phaseB, phaseC, VdMaf, VqMaf, cosGrid, sinGrid, phaseError, anglePll, angleDq\r\n");
+
+	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+
+
+    for (int i = 0; i < bufferSize; i++)
+    {
+        //printf("Buffervalue at index [%d] = %d\n", readIndex, circularBuffer[readIndex]);
+
+//    	sprintf(msg, "%d, %d, %d, %d\r\n", circularBuffer[readIndex][0], circularBuffer[readIndex][1],
+//									circularBuffer[readIndex][2], circularBuffer[readIndex][3]);	// Update message for usart print
+    	for (int n = 0; n < (RING_BUF_SIZE); n++) {
+
+    		if (n < RING_BUF_SIZE-1) {
+    			pos += sprintf(&msg[pos], "%d, ", circularBuffer[readIndex][n]);
+    		}
+    		else {
+    			pos += sprintf(&msg[pos], "%d\r\n", circularBuffer[readIndex][n]);
+    		}
+    	}
+
+    	/*
+    	sprintf(msg, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\r\n",
+											circularBuffer[readIndex][0], 	circularBuffer[readIndex][1],
+											circularBuffer[readIndex][2], 	circularBuffer[readIndex][3],
+											circularBuffer[readIndex][4], 	circularBuffer[readIndex][5],
+											circularBuffer[readIndex][6], 	circularBuffer[readIndex][7],
+											circularBuffer[readIndex][8], 	circularBuffer[readIndex][9],
+											circularBuffer[readIndex][10], 	circularBuffer[readIndex][11],
+											circularBuffer[readIndex][12], 	circularBuffer[readIndex][13],
+											circularBuffer[readIndex][14], 	circularBuffer[readIndex][15],
+											circularBuffer[readIndex][16], circularBuffer[readIndex][17],
+											circularBuffer[readIndex][18], circularBuffer[readIndex][19],
+											circularBuffer[readIndex][20], circularBuffer[readIndex][21],
+											circularBuffer[readIndex][22], circularBuffer[readIndex][23],
+											circularBuffer[readIndex][24], circularBuffer[readIndex][25]);	// Update message for usart print
+
+    	// sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
+		*/
+
+    	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+    	/*
+    	huart2.Instance->CR3 |= USART_CR3_DMAT;
+    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
+    							(uint32_t)&huart2.Instance->DR, strlen(msg));
+		*/
+    	pos = 0;
         readIndex++;
         if (readIndex > bufferSize) {
             readIndex = 0;

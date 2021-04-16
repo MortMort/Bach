@@ -2,11 +2,13 @@
 //--------------------------------------
 
 // Ring buffer
-#define RING_BUF_LEN 		2000								// Size of ring buffer
+#define RING_BUF_LEN 		3000								// Size of ring buffer
 //#define RING_BUF_SCALING	0xFFFF/(2*TWO_PI)	// 5215.2
 #define RING_BUF_SCALING	5000								// Lower than above for protection against noise?
-#define RING_BUF_SIZE		26									// Amount of signals in the ring buffer
-#define RING_BUF_SPLIT		0.25f								// Percentage of the ring buffer allocation to before trigger event
+#define RING_BUF_SIZE		17									// Amount of signals in the ring buffer
+#define RING_BUF_SPLIT		0.02f								// Percentage of the ring buffer allocation to before trigger event
+
+#define ADC_RING_BUF_SIZE	10									// Size of adc ring buffers
 
 // Math
 #define PI 					(3.1415926535897)					// PI
@@ -15,8 +17,12 @@
 #define F_RAD 				(50.0f*3.1415926535897f*2.0f)		// [rad/s] 50 Hz in radians
 
 // Sampling
-#define F_SAMPLE 			1000								// [Hz] The sample rate of the system (the interrupt timer
+#define F_SAMPLE 			2000								// [Hz] The sample rate of the system (the interrupt timer
 																// should be changed along with this value!!!!)
-#define T_SAMPLE 			0.001f								// [s] The sample time (should always be 1/F_SAMPLE!!)
+#define T_SAMPLE 			0.0005f								// [s] The sample time (should always be 1/F_SAMPLE!!)
+
+// MAF
+#define T_MAF				0.02f
+#define MAF_LEN 			(int)(40)							// MAF length REMEMBER TO SET THIS WHEN CHANGING SAMPLE FREQUENCY
 
 // Other
