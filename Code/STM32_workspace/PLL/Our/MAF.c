@@ -2,7 +2,12 @@
 #include "CONSTANTS.h"
 
 
-
+//  Function    :   circular_buffer
+//  Description :   This function creates a third symmetrical phase from two phases
+//  Parameters  :   float *nextSampleD		-
+//					float *nextSampleQ		-
+//  Returns     :   indirect : float *mafD	-
+//							   float *mafQ	-
 void maf(float *nextSampleD, float *nextSampleQ, float *mafD, float *mafQ)
 {
 	static int pos;

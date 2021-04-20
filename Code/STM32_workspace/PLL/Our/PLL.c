@@ -5,7 +5,13 @@
 // Constants
 
 
-
+//  Function    :   abc_to_alphabeta
+//  Description :   The abc signal -> alpha beta transformation
+//  Parameters  :   float a					- Phase A
+//					float b					- Phase B
+//					float c					- Phace C
+//  Returns     :   indirect : float *alpha	- Alpha
+//							   float *beta	- Beta
 void abc_to_alphabeta(float a, float b, float c, float *alpha, float *beta)
 {
 	// constants
@@ -40,7 +46,13 @@ void abc_to_alphabeta(float a, float b, float c, float *alpha, float *beta)
 //    return beta;
 //}
 
-
+//  Function    :   alphabeta_to_dq
+//  Description :   The alpha beta to dq transformation
+//  Parameters  :   float alpha			- Alpha
+//					float beta			- Beta
+//					float angle			- The angle of the dq-transformation
+//  Returns     :   indirect : float *d	- The 'direct' part of the dq transformation
+//							 : float *q	- The 'quadrature' part of the dq transformation
 void alphabeta_to_dq(float alpha, float beta, float angle, float *d, float *q)
 {
 	*d = cosf(angle)*alpha + sinf(angle)*beta;
@@ -67,7 +79,13 @@ void alphabeta_to_dq(float alpha, float beta, float angle, float *d, float *q)
 //    return q;
 //}
 
-
+//  Function    :   dq_to_alphabeta
+//  Description :   The dq -> alpha beta transformation (inverse of the alphabeta -> dq transformation)
+//  Parameters  :   float d					- The 'direct' part of the dq transformation
+//					float q					- The 'quadrature' part of the dq transformation
+//					float angle				- The dq transformation angle
+//  Returns     :   indirect : float *alpha	- Alpha
+//							   float *beta	- Beta
 void dq_to_alphabeta(float d, float q, float angle, float *alpha, float *beta)
 {
 	*alpha = cosf(angle)*d - sinf(angle)*q;
@@ -93,12 +111,18 @@ void dq_to_alphabeta(float d, float q, float angle, float *alpha, float *beta)
 //    return beta;
 //}
 
-
+//  Function    :   cos_sin_grid
+//  Description :   Finds the cosine and sine to the grid angle
+//  Parameters  :   float alpha					- The alpha from the abc->alpha beta transformation
+//					float beta					- The beta from the abc->alpha beta transformation
+//  Returns     :   indirect : float *cos_grid	- The cosine to the grid angle
+//							   float *sin_grid	- The sine to the grid angle
 void cos_sin_grid(float alpha, float beta, float *cos_grid, float *sin_grid)
 {
 	static float sqrtCalc;
 
-	sqrtCalc = pow((alpha*alpha + beta*beta), -0.5f);
+	// 1e-9 is to avoid sqrt and division by zero.
+	sqrtCalc = powf((alpha*alpha + beta*beta + 1e-9), -0.5f);
 	*cos_grid = alpha * sqrtCalc;
 	*sin_grid = beta * sqrtCalc;
 }
@@ -113,7 +137,16 @@ void cos_sin_grid(float alpha, float beta, float *cos_grid, float *sin_grid)
 //    return beta/ (sqrt(alpha*alpha + beta*beta));
 //}
 
-
+//  Function    :   pi_regulator
+//  Description :   The Pll pi-regulator, which attempts rotates the return value (anglePll) in phase with the grid phase
+//  Parameters  :   float phaseError			- The phase error between the grid and pll angles
+//					float feedForward			- The nominal frequency in rad/s. In this case 60 Hz
+//					float kp					- The Kp PI-regulator parameter value
+//					float kp					- The Ki PI-regulator parameter value
+//					float kPhi					- The k_phi off-nominal frequency angle kompensation constant
+//					float Ts					- The sample time, defined by sampling frequency
+//  Returns     :   indirect : *anglePll		- The Pll angle in phase with the grid angle
+//							   *anglePllComp	- The Pll angle, compensated with kPhi at off-nominal frequencies
 void pi_regulator(float phaseError, float feedForward, float ki, float kp, float kPhi, float Ts, float *anglePll, float *anglePllComp)
 {
     static float phaseError_old, integral_old, angle_old, omega_old, integral, omega;;
@@ -184,6 +217,12 @@ void pi_regulator(float phaseError, float feedForward, float ki, float kp, float
 //    return anglePllComp;
 //}
 
+//  Function    :   phase_detector
+//  Description :   Finds the phase difference between the grid angle and and pll angle
+//  Parameters  :   float cosGrid		- cosine to the grid angle
+//					float sinGrid		- sine to the grid angle
+//					float anglePllComp	- Compensated pll angle
+//  Returns     :   float phaseError	- The difference between grid and pll angle
 float phase_detector(float cosGrid, float sinGrid, float anglePllComp)
 {
     return sinGrid*cosf(anglePllComp) - cosGrid*sinf(anglePllComp);

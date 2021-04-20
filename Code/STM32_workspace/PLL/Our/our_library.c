@@ -89,29 +89,21 @@ void circular_buffer(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t *da
 //                  uint16_t *dataInput: Pointer to data to be inserted into circular buffer
 //                  uint8_t event: A flag which, when triggered, sets the ring buffer to fill the last 1-bufSplit% of the buffer
 //                  float bufSplit: The percentage of the buffer which is kept in the ring buffer after event trigger.
-//  Returns     :   *readStart: Where to start reading the ring buffer
+//  Returns     :   direct : bufferDoneFlag:
+//					indirect : *readStart: Where to start reading the ring buffer
 uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], int16_t *dataInput, uint8_t event, float bufSplit, uint16_t *readStart)
 {
     static uint16_t writeIndex	        =	0;	// Index of the write pointer
     static uint16_t bufferLength	    =	0;	// Number of values in circular buffer
-    static uint16_t bufferSplitLength   =   0;
-    static uint8_t  eventEntry          =   0;
-    static uint8_t  bufferFullEntry     =   0;
-    static uint8_t	bufferDoneFlag		=	0;
-    static uint8_t	eventLatch			=	0; // Latches upon event flag going high and resets when buffer is full
+    static uint16_t bufferSplitLength   =   0;	// The amount of samples in the buffer split
 
-    // If the buffer has been filled, the oldest sample is always in the NEXT index
-    // else it is equal to 0;
-    /* I no understand why readIndex != writeIndex + 1
-    if (bufferLength == bufferSize) {
-        if (writeIndex != bufferSize) {
-            *readStart = writeIndex;
-        }
-        else {
-            *readStart = 0;
-        }
-    } */
+    static uint8_t  eventEntry          =   0;	// False for one execution
+    static uint8_t  bufferFullEntry     =   0;	// False for one execution
+    static uint8_t	bufferDoneFlag		=	0;	// True when the buffer is full after an event
+    static uint8_t	eventLatch			=	0;	// Latches upon event flag going high and resets when buffer is full
 
+
+    // Latch event, so it doesn't have to be held HIGH
     if (event) {
     	eventLatch = 1;
     }
@@ -123,6 +115,8 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
     if (eventLatch) {
         if (!eventEntry) {
             // Event has triggered
+        	bufferDoneFlag = 0;
+        	bufferFullEntry = 0;
             bufferSplitLength = bufSplit * bufferSize;
             eventEntry = 1;
         }
@@ -153,7 +147,6 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
         writeIndex++;
         bufferLength++;
     }
-
 
 
     // Reset bufferlength

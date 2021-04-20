@@ -6,7 +6,7 @@
 //#define RING_BUF_SCALING	0xFFFF/(2*TWO_PI)	// 5215.2
 #define RING_BUF_SCALING	5000								// Lower than above for protection against noise?
 #define RING_BUF_SIZE		17									// Amount of signals in the ring buffer
-#define RING_BUF_SPLIT		0.02f								// Percentage of the ring buffer allocation to before trigger event
+#define RING_BUF_SPLIT		0.0f								// Percentage of the ring buffer allocation to before trigger event
 
 #define ADC_RING_BUF_SIZE	10									// Size of adc ring buffers
 

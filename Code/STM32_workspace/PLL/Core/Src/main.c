@@ -76,7 +76,6 @@ uint16_t adcRingBuf2[ADC_RING_BUF_SIZE];
 uint16_t adcRingBuf3[ADC_RING_BUF_SIZE];
 
 
-uint8_t ringBufTrigger = 0;		// Triggers the ring buffer
 uint8_t	ringBufTrigger2 = 0;	// Triggers the ring buffer from the gpio input
 uint8_t ringBufFlag	= 0;		// Goes high when the ring buffer is done filling the buffer after trigger
 uint8_t ringBufPrintDone = 0;	// Goes high when printing of ring buffer is done, so usart isn't called again
@@ -85,6 +84,9 @@ uint8_t ringBufPrintDone = 0;	// Goes high when printing of ring buffer is done,
 int16_t timingArray[10];
 int16_t timer_temp;
 
+
+uint16_t var_dac;		// Dac output variable
+float var_dac_f;			// Temporary float for dac output
 
 uint16_t adcValue1, adcValue2, adcValue3;
 
@@ -202,12 +204,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	// External trigger in (from waveforms)
 	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_3)){
 		ringBufTrigger2 = 1;
 	}
 
-	// Rest from button
+	// Reset from button
 	if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)) {
+		ringBufFlag = 0;
 		ringBufTrigger2 = 0;
 		ringBufPrintDone = 0;
 	}
@@ -692,8 +697,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim10)
   {
     static uint16_t count; 			// Counter for sine output
-    static uint16_t var_dac;		// Dac output variable
-    static float var_dac_f;			// Temporary float for dac output
+//    static uint16_t var_dac;		// Dac output variable
+//    static float var_dac_f;			// Temporary float for dac output
 
     // PLL variables start
     // Variables declared globally for easier debugging.
@@ -703,6 +708,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// Set pin: Start timer
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 
+    // ADCs
     timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
@@ -719,6 +725,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// ADC 3
     HAL_ADC_Start(&hadc3);
     HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY);
+
     adcValue3 = HAL_ADC_GetValue(&hadc3);
     timingArray[0] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
@@ -747,11 +754,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
 
-    // Create simulation three phase
-//    phaseA = sinf(angleDq);
-//	phaseB = sinf(angleDq-RAD_120);
-//	phaseC = sinf(angleDq+RAD_120);
-
+    	// Create simulation three phase
+    //    phaseA = sinf(angleDq);
+    //	phaseB = sinf(angleDq-RAD_120);
+    //	phaseC = sinf(angleDq+RAD_120);
 
 	// abc -> alpha beta
 	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
@@ -774,7 +780,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // MAF
     timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-//    maf(&phaseA, &phaseB, &VdMaf, &VqMaf);
+
 	maf(&Vd, &Vq, &VdMaf, &VqMaf);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
@@ -784,7 +790,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
-    dq_to_alphabeta(Vd, Vq, angleDq, &alpha2, &beta2);
+    dq_to_alphabeta(VdMaf, VqMaf, angleDq, &alpha2, &beta2);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 	timingArray[5] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
@@ -799,7 +805,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
     timingArray[6] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-    // Phade detector
+    // Phase detector
     timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
@@ -820,10 +826,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     //--------------------------------------------------------------------------------------------
     // PLL End
-
+    static float temp = 0.1;
+    temp = temp + 0.1f;
+    if (temp > 3.2f) {
+    	temp = 0.1;
+    }
     // DAC
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-    var_dac_f = (anglePll*0.5f + 0.05f) * 4096.0f/3.3f;	// +1 for offset for negative values, /3.3 for scaling
+//    var_dac_f = (anglePll*0.5f + 0.05f) * 4096.0f/3.3f;	// +1 for offset for negative values, /3.3 for scaling
+    static float var;
+    var = temp;
+//    var_dac_f = (var * 4096.0f/3.3f) +  var*(-0.0078) + 45.783;		// +1 for offset for negative values, /3.3 for scaling
+    var_dac_f = (var * 4096.0f/3.3f);		// +1 for offset for negative values, /3.3 for scaling
     var_dac = (uint16_t)var_dac_f; 			// Convert from float to uint16_t
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
@@ -846,7 +860,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // Ring buffer
     ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
     ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
-    ringBufData[2] 	= ((float)	phaseC 			* (float)RING_BUF_SCALING);
+    ringBufData[2] 		= ((float)	phaseC 			* (float)RING_BUF_SCALING);
     ringBufData[3] 	= ((float)	alpha1 			* (float)RING_BUF_SCALING);
     ringBufData[4] 	= ((float)	beta1 			* (float)RING_BUF_SCALING);
     ringBufData[5] 	= ((float)	Vd 				* (float)RING_BUF_SCALING);
@@ -884,7 +898,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	else
 	{
-	  ringBufTrigger = 1;
 	  count = 0;
 	}
 
@@ -959,7 +972,7 @@ uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SI
 
 //  Function    :   print_ring_buf
 //  Description :   prints the ring buffer values
-//  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
+//  Parameters  :   uint16_t bufferSize: The amount of sampling points that the circularBuffer can contain
 //                  uint16_t circularBuffer: Pointer to circular buffer array
 //                  uint16_t readStart: starting index of the circular buffer
 //  Returns     :	none
@@ -1024,9 +1037,9 @@ uint8_t print_ring_buf_v2(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF
     	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
     							(uint32_t)&huart2.Instance->DR, strlen(msg));
 		*/
-    	pos = 0;
+    	pos = 0;	// Reset pos
         readIndex++;
-        if (readIndex > bufferSize) {
+        if (readIndex > (bufferSize-1)) {
             readIndex = 0;
         }
     }
