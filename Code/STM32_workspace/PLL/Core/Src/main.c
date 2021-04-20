@@ -826,19 +826,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     //--------------------------------------------------------------------------------------------
     // PLL End
-    static float temp = 0.1;
-    temp = temp + 0.1f;
-    if (temp > 3.2f) {
-    	temp = 0.1;
-    }
+//    static float temp = 0.1;
+//    temp = temp + 0.1f;
+//    if (temp > 3.2f) {
+//    	temp = 0.1;
+//    }
     // DAC
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-//    var_dac_f = (anglePll*0.5f + 0.05f) * 4096.0f/3.3f;	// +1 for offset for negative values, /3.3 for scaling
-    static float var;
-    var = temp;
+    var_dac_f = (anglePll*0.5f + 0.05f) * 4096.0f/3.3f;	// +1 for offset for negative values, /3.3 for scaling
+//    static float var;
+//    var = temp;
 //    var_dac_f = (var * 4096.0f/3.3f) +  var*(-0.0078) + 45.783;		// +1 for offset for negative values, /3.3 for scaling
-    var_dac_f = (var * 4096.0f/3.3f);		// +1 for offset for negative values, /3.3 for scaling
+//    var_dac_f = (var * 4096.0f/3.3f);		// +1 for offset for negative values, /3.3 for scaling
     var_dac = (uint16_t)var_dac_f; 			// Convert from float to uint16_t
+
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
