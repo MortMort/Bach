@@ -79,6 +79,7 @@ uint16_t adcRingBuf3[ADC_RING_BUF_SIZE];
 uint8_t	ringBufTrigger2 = 0;	// Triggers the ring buffer from the gpio input
 uint8_t ringBufFlag	= 0;		// Goes high when the ring buffer is done filling the buffer after trigger
 uint8_t ringBufPrintDone = 0;	// Goes high when printing of ring buffer is done, so usart isn't called again
+uint8_t ringBufReset = 0;
 
 // Execution time, time taking
 int16_t timingArray[10];
@@ -215,6 +216,11 @@ int main(void)
 		ringBufFlag = 0;
 		ringBufTrigger2 = 0;
 		ringBufPrintDone = 0;
+
+		ringBufReset = 1;
+	}
+	else {
+		ringBufReset = 0;
 	}
 
 
@@ -888,7 +894,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //    ringBufData[24] = timingArray[7];
 //    ringBufData[25] = timingArray[8];
 
-    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger2, RING_BUF_SPLIT, &readStart);
+    ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger2, ringBufReset, RING_BUF_SPLIT, &readStart);
 
 
 

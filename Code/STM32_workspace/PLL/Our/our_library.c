@@ -91,7 +91,7 @@ void circular_buffer(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t *da
 //                  float bufSplit: The percentage of the buffer which is kept in the ring buffer after event trigger.
 //  Returns     :   direct : bufferDoneFlag:
 //					indirect : *readStart: Where to start reading the ring buffer
-uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], int16_t *dataInput, uint8_t event, float bufSplit, uint16_t *readStart)
+uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SIZE], int16_t *dataInput, uint8_t event, uint8_t reset, float bufSplit, uint16_t *readStart)
 {
     static uint16_t writeIndex	        =	0;	// Index of the write pointer
     static uint16_t bufferLength	    =	0;	// Number of values in circular buffer
@@ -112,10 +112,14 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
         *readStart = writeIndex;
     }
 
+    if (reset) {
+    	bufferDoneFlag = 0;
+    }
+
     if (eventLatch) {
         if (!eventEntry) {
             // Event has triggered
-        	bufferDoneFlag = 0;
+
         	bufferFullEntry = 0;
             bufferSplitLength = bufSplit * bufferSize;
             eventEntry = 1;
