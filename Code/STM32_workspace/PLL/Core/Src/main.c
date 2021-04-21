@@ -864,24 +864,37 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     ringBufData[9] = ((float)	angleDq			* (float)RING_BUF_SCALING);
 	*/
 
-    // Ring buffer
+    // Ring buffer with all subcomponents
+//    ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
+//    ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
+//    ringBufData[2]  = ((float)	phaseC 			* (float)RING_BUF_SCALING);
+//    ringBufData[3] 	= ((float)	alpha1 			* (float)RING_BUF_SCALING);
+//    ringBufData[4] 	= ((float)	beta1 			* (float)RING_BUF_SCALING);
+//    ringBufData[5] 	= ((float)	Vd 				* (float)RING_BUF_SCALING);
+//    ringBufData[6] 	= ((float)	Vq				* (float)RING_BUF_SCALING);
+//    ringBufData[7] 	= ((float)	VdMaf 			* (float)RING_BUF_SCALING);
+//    ringBufData[8] 	= ((float)	VqMaf 			* (float)RING_BUF_SCALING);
+//    ringBufData[9] 	= ((float)	alpha2 			* (float)RING_BUF_SCALING);
+//    ringBufData[10] = ((float)	beta2			* (float)RING_BUF_SCALING);
+//    ringBufData[11] = ((float)	cosGrid			* (float)RING_BUF_SCALING);
+//    ringBufData[12] = ((float)	sinGrid 		* (float)RING_BUF_SCALING);
+//    ringBufData[13] = ((float)	phaseError 		* (float)RING_BUF_SCALING);
+//    ringBufData[14] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+//    ringBufData[15] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
+//    ringBufData[16] = ((float)	angleDq			* (float)RING_BUF_SCALING);
+
+    // Ring buffer for mini acceptance test @ 2kHz:
     ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
     ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
-    ringBufData[2] 		= ((float)	phaseC 			* (float)RING_BUF_SCALING);
-    ringBufData[3] 	= ((float)	alpha1 			* (float)RING_BUF_SCALING);
-    ringBufData[4] 	= ((float)	beta1 			* (float)RING_BUF_SCALING);
-    ringBufData[5] 	= ((float)	Vd 				* (float)RING_BUF_SCALING);
-    ringBufData[6] 	= ((float)	Vq				* (float)RING_BUF_SCALING);
-    ringBufData[7] 	= ((float)	VdMaf 			* (float)RING_BUF_SCALING);
-    ringBufData[8] 	= ((float)	VqMaf 			* (float)RING_BUF_SCALING);
-    ringBufData[9] 	= ((float)	alpha2 			* (float)RING_BUF_SCALING);
-    ringBufData[10] = ((float)	beta2			* (float)RING_BUF_SCALING);
-    ringBufData[11] = ((float)	cosGrid			* (float)RING_BUF_SCALING);
-    ringBufData[12] = ((float)	sinGrid 		* (float)RING_BUF_SCALING);
-    ringBufData[13] = ((float)	phaseError 		* (float)RING_BUF_SCALING);
-    ringBufData[14] = ((float)	anglePll 		* (float)RING_BUF_SCALING);
-    ringBufData[15] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
-    ringBufData[16] = ((float)	angleDq			* (float)RING_BUF_SCALING);
+    ringBufData[2]  = ((float)	phaseC 			* (float)RING_BUF_SCALING);
+    ringBufData[3] 	= ((float)	Vd 				* (float)RING_BUF_SCALING);
+    ringBufData[4] 	= ((float)	Vq				* (float)RING_BUF_SCALING);
+    ringBufData[5] 	= ((float)	VdMaf 			* (float)RING_BUF_SCALING);
+    ringBufData[6] 	= ((float)	VqMaf 			* (float)RING_BUF_SCALING);
+    ringBufData[7]  = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+
+
+
 
     // Timing:
 //    ringBufData[17] = timingArray[0];
@@ -914,7 +927,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-
+/*
 //  Function    :   print_ring_buf
 //  Description :   prints the ring buffer values
 //  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
@@ -933,7 +946,7 @@ uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SI
         init = 1;
     }
 
-	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
+//	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
 	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
 
@@ -962,11 +975,11 @@ uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SI
 
 
     	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-    	/*
-    	huart2.Instance->CR3 |= USART_CR3_DMAT;
-    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
-    							(uint32_t)&huart2.Instance->DR, strlen(msg));
-		*/
+
+//    	huart2.Instance->CR3 |= USART_CR3_DMAT;
+//    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
+//    							(uint32_t)&huart2.Instance->DR, strlen(msg));
+
 
         readIndex++;
         if (readIndex > bufferSize) {
@@ -976,6 +989,7 @@ uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SI
     return 1;
 
 }
+*/
 
 //  Function    :   print_ring_buf
 //  Description :   prints the ring buffer values
@@ -997,7 +1011,8 @@ uint8_t print_ring_buf_v2(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF
     }
 
 //	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
-    sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
+//    sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
+    sprintf(msg, "phaseA, phaseB, phaseC, Vd, Vq, VdMaf, VqMaf, anglePll\r\n");
 //    sprintf(msg, "phaseA, phaseB, phaseC, VdMaf, VqMaf, cosGrid, sinGrid, phaseError, anglePll, angleDq\r\n");
 
 	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
