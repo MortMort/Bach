@@ -538,7 +538,7 @@ static void MX_TIM10_Init(void)
   htim10.Instance = TIM10;
   htim10.Init.Prescaler = 180-1;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 500-1;
+  htim10.Init.Period = 100-1;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
@@ -883,7 +883,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //    ringBufData[15] = ((float)	anglePllComp	* (float)RING_BUF_SCALING);
 //    ringBufData[16] = ((float)	angleDq			* (float)RING_BUF_SCALING);
 
-    // Ring buffer for mini acceptance test @ 2kHz:
+/*    // Ring buffer for mini acceptance test @ 2kHz:
     ringBufData[0] 	= ((float)	phaseA 			* (float)RING_BUF_SCALING);
     ringBufData[1] 	= ((float)	phaseB			* (float)RING_BUF_SCALING);
     ringBufData[2]  = ((float)	phaseC 			* (float)RING_BUF_SCALING);
@@ -892,7 +892,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     ringBufData[5] 	= ((float)	VdMaf 			* (float)RING_BUF_SCALING);
     ringBufData[6] 	= ((float)	VqMaf 			* (float)RING_BUF_SCALING);
     ringBufData[7]  = ((float)	anglePll 		* (float)RING_BUF_SCALING);
+*/
 
+    // Ring buffer for mini acceptance test @ 10 kHz:
+    ringBufData[0]  = ((float)	anglePll 		* (float)RING_BUF_SCALING);
 
 
 
@@ -1012,7 +1015,9 @@ uint8_t print_ring_buf_v2(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF
 
 //	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
 //    sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
-    sprintf(msg, "phaseA, phaseB, phaseC, Vd, Vq, VdMaf, VqMaf, anglePll\r\n");
+//    sprintf(msg, "phaseA, phaseB, phaseC, Vd, Vq, VdMaf, VqMaf, anglePll\r\n");
+    sprintf(msg, "anglePll\r\n");
+
 //    sprintf(msg, "phaseA, phaseB, phaseC, VdMaf, VqMaf, cosGrid, sinGrid, phaseError, anglePll, angleDq\r\n");
 
 	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
