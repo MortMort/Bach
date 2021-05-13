@@ -10,5 +10,5 @@ main.c:571:13:MX_USART2_UART_Init	8	static
 main.c:602:13:MX_DMA_Init	16	static
 main.c:620:13:MX_GPIO_Init	48	static
 main.c:701:6:HAL_TIM_PeriodElapsedCallback	24	static
-main.c:1003:9:print_ring_buf_v2	24	static
-main.c:1084:6:Error_Handler	4	static,ignoring_inline_asm
+main.c:1000:9:print_ring_buf_v2	24	static
+main.c:1081:6:Error_Handler	4	static,ignoring_inline_asm
