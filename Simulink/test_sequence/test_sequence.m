@@ -1,9 +1,12 @@
 clc; clear; close all;
 %% script for generating test sequence for PLL's
-
+x = 500
+y = 400
+width = 900
+height = 900
 
 %% Variable constants for test sequence
-fs = 10000
+fs = 100000
 ts = 1/fs
 t_end = 75
 t = ts*(0:t_end*fs);
@@ -25,15 +28,13 @@ t_13 = t_12+t_event_high;
 t_14 = t_13+duration;
 t_15 = t_14+t_event_low;
 
-
+% start out at 47 Hz
 pha10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			));
 phb10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) - 2*pi/3);
 phc10 = sin(2*pi*f_start*		t(1:round(t_event_low*fs)			) + 2*pi/3);
 V10 = [pha10; phb10; phc10]';
 
-
-
-% 47 to 53 Hz
+% sweep 47 to 53 Hz
 pha11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',270);
 phb11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',150);
 phc11 = chirp(					t(1:round(duration*fs)				),f_start,3,f_top,'linear',30);
@@ -47,7 +48,7 @@ phc12 = sin(2*pi*f_top*			t(1:round(t_event_high*fs)			) + 2*pi/3);
 V12 = [pha12; phb12; phc12]';
 
 
-% 53 to 47 Hz
+% sweep 53 to 47 Hz
 pha13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',270);
 phb13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',150);
 phc13 = chirp(					t(1:round(duration*fs)				),f_top,3,f_start,'linear',30);
@@ -65,8 +66,8 @@ V14 = [pha14; phb14; phc14]';
 V1 = [V10; V11; V12; V13; V14];
 
 % figures = figure(11)
-figures = figure('Position', [500 500 900 600])
-
+figures = figure('Position', [x y width height])
+subplot(211)
 plot(t(1        : round(t_11*fs)), [pha10; phb10; phc10]')
 hold on
 grid on
@@ -143,8 +144,9 @@ phc27 = sin(2*pi*f_base*t(1:t_recov*fs) + 2*pi/3);
 V27 = [pha27; phb27; phc27]';
     
 % figures = [figures; figure(21)]
-figures = [figures; figure('Position', [500 500 900 600])]
-% figure('Position', [500 500 900 600])
+figures = [figures; figure('Position', [x y width height])]
+subplot(211)
+% figure('Position', [x y width height])
 plot(t(1        : t_21*fs), V21)
 grid on
 hold on
@@ -225,7 +227,8 @@ V37 = [pha37; phb37; phc37]';
 
 
 % figures = [figures; figure(31)]
-figures = [figures; figure('Position', [500 500 900 600])]
+figures = [figures; figure('Position', [x y width height])]
+subplot(211)
 plot(t(1        : t_31*fs), V31)
 grid on
 hold on
@@ -236,8 +239,8 @@ plot(t(t_34*fs+1: t_35*fs), V35)
 plot(t(t_35*fs+1: t_36*fs), V36)
 plot(t(t_36*fs+1: t_37*fs), V37)
 
-phasetitle1 = sprintf('Fluctuations and over/under voltage: %.f - %.f pct, 1, 2 and 3 phase', Amax*100, Amin*100)
-title(phasetitle1,'FontSize', fontsize)
+flucttitle1 = sprintf('Fluctuations and over/under voltage: %.f - %.f pct, 1, 2 and 3 phase', Amax*100, Amin*100)
+title(flucttitle1,'FontSize', fontsize)
 xlabel('Time')
 ylabel('Amplitude')
 ylim([-1.2 1.2])
@@ -311,7 +314,8 @@ V47 = [pha47; phb47; phc47]';
 
 
 % figures = [figures; figure(41)]
-figures = [figures; figure('Position', [500 500 900 600])]
+figures = [figures; figure('Position', [x y width height])]
+subplot(211)
 plot(t(1        : t_41*fs), V41)
 grid on
 hold on
@@ -376,7 +380,8 @@ phc54 = Amax*sin(2*pi*f_base*t(1:t_recov*fs) + 2*pi/3) + A5_2*sin(5*(2*pi*f_base
 V54 = [pha54; phb54; phc54]';
 
 % figures = [figures; figure(51)]
-figures = [figures; figure('Position', [500 500 900 600])]
+figures = [figures; figure('Position', [x y width height])]
+subplot(211)
 plot(t(1        : t_51*fs), V51)
 grid on
 hold on
@@ -392,99 +397,11 @@ ylim([-1.2 1.2])
 xlim([0 t_54])
 
 V5 = [V51; V52; V53; V54];
-%% interruptions, TC6
-% f_base = 50
-% cycles = 500
-% t_recov = cycles/f_base
-% fluct_rate = f_base*1/2 % percent pr sec
-% Amax = 1
-% Amin = 0.00
-% t_fluct = (Amax-Amin)/fluct_rate
-% down_cycles = 7
-% t_down = down_cycles/f_base
-% 
-% t_61  = t_recov; 
-% t_62  = t_61  + (t_down+t_fluct); 
-% t_63  = t_62  + t_recov;
-% t_64  = t_63  + (t_down+t_fluct); 
-% t_65  = t_64  + t_recov;
-% t_66  = t_65  + (t_down+t_fluct); 
-% t_67  = t_66  + t_recov;
-% 
-% % start up
-% pha61 = Amax*sin(2*pi*f_base*t(1:t_recov*fs));
-% phb61 = Amax*sin(2*pi*f_base*t(1:t_recov*fs) - 2*pi/3);
-% phc61 = Amax*sin(2*pi*f_base*t(1:t_recov*fs) + 2*pi/3);
-% V61 = [pha61; phb61; phc61]';
-% 
-% % single phase interruption
-% % pha62 = [sin(2*pi*f_base*t(1:t_fluct*fs)).*(Amax-fluct_rate*t(1:t_fluct*fs)),  Amin*sin(2*pi*f_base*t(t_fluct*fs+1:  t_recov*fs))];
-% pha62 = [sin(2*pi*f_base*t(1:t_fluct*fs))            .*(Amax-fluct_rate*t(1:t_fluct*fs)),   Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs))];
-% phb62 =                                                                                     Amax*sin(2*pi*f_base*t(1:                (t_down+t_fluct)*fs) - 2*pi/3);
-% phc62 =                                                                                     Amax*sin(2*pi*f_base*t(1:                (t_down+t_fluct)*fs) + 2*pi/3);
-% V62 = [pha62; phb62; phc62]';   
-% 
-% % single phase restore
-% pha63 = [sin(2*pi*f_base*t(1:t_fluct*fs))           .*(Amin+fluct_rate*t(1:t_fluct*fs)),    Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs))];
-% phb63 =                                                                                     Amax*sin(2*pi*f_base*t(1:                t_recov*fs) - 2*pi/3);
-% phc63 =                                                                                     Amax*sin(2*pi*f_base*t(1:                t_recov*fs) + 2*pi/3);
-% V63 = [pha63; phb63; phc63]';
-% 
-% % two phase interruption                                               XXXXXXXXXXXXXXXXXXXXXXXXXXX      her sker fase forskydning
-% pha64 = [sin(2*pi*f_base*t(1:t_fluct*fs))		 	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs))];
-% phb64 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs) - 2*pi/3)];
-% phc64 =                                                                        				Amax*sin(2*pi*f_base*t(1:                (t_down+t_fluct)*fs) + 2*pi/3);
-% V64 = [pha64; phb64; phc64]';
-% 
-% % two phase restore
-% pha65 = [sin(2*pi*f_base*t(1:t_fluct*fs))			.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs))];
-% phb65 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs) - 2*pi/3)];
-% phc65 =                                                                        				Amax*sin(2*pi*f_base*t(1:                t_recov*fs) + 2*pi/3);
-% V65 = [pha65; phb65; phc65]';
-% 
-% % three phase interruption
-% pha66 = [sin(2*pi*f_base*t(1:t_fluct*fs))		 	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs))];
-% phb66 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs) - 2*pi/3)];
-% phc66 = [sin(2*pi*f_base*t(1:t_fluct*fs) + 2*pi/3)	.*(Amax-fluct_rate*t(1:t_fluct*fs)),  	Amin*sin(2*pi*f_base*t(t_fluct*fs+1:     (t_down+t_fluct)*fs) + 2*pi/3)];
-% V66 = [pha66; phb66; phc66]';
-% 
-% % three phase restore
-% pha67 = [sin(2*pi*f_base*t(1:t_fluct*fs))			.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs))];
-% phb67 = [sin(2*pi*f_base*t(1:t_fluct*fs) - 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs) - 2*pi/3)];
-% phc67 = [sin(2*pi*f_base*t(1:t_fluct*fs) + 2*pi/3)	.*(Amin+fluct_rate*t(1:t_fluct*fs)),  	Amax*sin(2*pi*f_base*t(t_fluct*fs+1:     t_recov*fs) + 2*pi/3)];
-% V67 = [pha67; phb67; phc67]';
-% 
-% figures = [figures; figure(61)]
-% % plot(t(1        : t_61*fs), V61)
-% % grid on
-% % hold on
-% % plot(t(t_61*fs+1: t_62*fs), V62)
-% % plot(t(t_62*fs+1: t_63*fs), V63)
-% % plot(t(t_63*fs+1: t_64*fs), V64)
-% % plot(t(t_64*fs+1: t_65*fs), V65)
-% % plot(t(t_65*fs+1: t_66*fs), V66)
-% % plot(t(t_66*fs: t_67*fs), V67)
-% plot(t(1        	   : round(t_61*fs)), V61)
-% grid on
-% hold on
-% plot(t(round(t_61*fs)+1: round(t_62*fs)), V62)
-% plot(t(round(t_62*fs)+1: round(t_63*fs)), V63)
-% plot(t(round(t_63*fs)+1: round(t_64*fs)), V64)
-% plot(t(round(t_64*fs)+1: round(t_65*fs)), V65)
-% plot(t(round(t_65*fs)+1: round(t_66*fs)), V66)
-% plot(t(round(t_66*fs)+1: round(t_67*fs)), V67)
-% intertitle1 = sprintf('Interruptions: %d - %d pct, single, two and three phase', Amax*100, Amin*100)
-% title(intertitle1)
-% xlabel('Time')
-% ylabel('Amplitude')
-% ylim([-1.2 1.2])
-% 
-% V6 = [V61; V62; V63; V64; V65; V66; V67];
-
 
 %% this part is for 100 kHz with Amin = 0.0001
 f_base = 50
 cycles = 500
+
 t_recov = cycles/f_base
 fluct_rate = f_base*1/2 % percent pr sec
 Amax = 1
@@ -545,7 +462,8 @@ phc67 = [sin(2*pi*f_base*t(1:round(t_fluct*fs)) + 2*pi/3)	.*(Amin+fluct_rate*t(1
 V67 = [pha67; phb67; phc67]';
 
 % figures = [figures; figure(61)]
-figures = [figures; figure('Position', [500 500 900 600])]
+figures = [figures; figure('Position', [x y width height])]
+subplot(211)
 plot(t(1        	   : round(t_61*fs)), V61)
 grid on
 hold on
@@ -573,15 +491,6 @@ V6 = [V61; V62; V63; V64; V65; V66; V67];
 % 
 %     exportgraphics(figures(i), f,'Resolution', 400)
 % end
-%% plotting of phase a angle
-
-% figure(1)
-% plot(t(1:round(t_15*fs)),unwrap(angle(hilbert(V1(:,1))))+pi/2)
-% hold on
-% plot(t(1:round(t_15*fs)),47*2*pi*t(1:round(t_15*fs)))
-% grid on
-
-
 
 %% saving signals to workspace
 time = .1*(0:100)';
@@ -620,9 +529,6 @@ tt5 = timetable(seconds(t(1:round(t_54*fs)))', [mod(2*pi*50*t(1:round(t_54*fs)),
 tt6 = timetable(seconds(t(1:round(t_67*fs+1)))', [mod(2*pi*50*t(1:(round(t_67*fs)+1)),2*pi)' V6]); %modulus of phase
 
 
-figure()
-% stackedplot(tt6)
-plot(seconds(t(1:round(t_67*fs+1))), mod(2*pi*50*t(1:(round(t_67*fs)+1)),2*pi))
 %% saving signals to directory
 % convert timetables to tables without 'sec' extensions to all time
 % measurements
@@ -645,5 +551,85 @@ plot(seconds(t(1:round(t_67*fs+1))), mod(2*pi*50*t(1:(round(t_67*fs)+1)),2*pi))
 %     
 % end
 
+%% Adding various extra details for plots
+% close all
+% 
+xlines = {  
+%     []                                   ;
+            [t_11, t_12, t_13, t_14,            ];
+            [t_21, t_22, t_23, t_24, t_25, t_26 ];
+            [t_31, t_32, t_33, t_34, t_35, t_36 ];
+            [t_41, t_42, t_43, t_44, t_45, t_46 ];
+            [t_51, t_52, t_53                   ];
+            [t_61, t_62, t_63, t_64, t_65, t_66 ]; } % these times define when changes in signals happen
 
+xlinelegs = {
+%              {""};
+			 
+             {["Sweep"; "start@"; "47 Hz"], 	["Sweep"; "stop@"; "53 Hz"], 	["Sweep"; "start@"; "53 Hz"], 	["Sweep"; "stop@"; "47 Hz"]};
+			 
+             {["1ph"; "jump"], 					["1ph"; "return"],  			["2ph"; "jump"],   				["2ph"; "return"],   				["3ph"; "jump"],   				["3ph"; "return" ] };
+             
+			 {["1ph"; "start@"; "110 pct"], 	["1ph"; "stop@ "; "85 pct "], 	["2ph"; "start@"; "110 pct"],   ["2ph"; "stop@ "; "85 pct"],  		["3ph"; "start@"; "110 pct"],   ["3ph"; "stop@ "; "85 pct "]};
+			  
+			 {["1ph"; "start@"; "100 pct"],     ["1ph"; "stop@ "; "10 pct "],   ["2ph"; "start@"; "100 pct"],   ["2ph"; "stop@ "; "10 pct"],   		["3ph"; "start@"; "100 pct"],   ["3ph"; "stop@ ";  "10 pct "]};
+			  
+			 {["Harmonics"; "start"],   		["Harmonics"; "stop"],		    ["Harmonics"; "start"]};
+			 
+			 {["1ph"; "start@"; "100 pct"],     ["1ph"; "stop@ "; "0.01 pct"],  ["2ph"; "start@"; "100 pct"],   ["2ph"; "stop@ "; "0.01 pct"],   	["3ph"; "start@"; "100 pct"], 	["3ph"; "stop@ ";  "0.01 pct"]};
+			 
+            }
+        
+leg = ["Phase A", "Phase B", "Phase C"] 
 
+ylims = [-1.1 1.85];
+xlims = [[10.6 10.7]; [49.98 50.02]; [9.97 10.38]; [9.97 10.38]; [9.95 10.05]; [9.97 10.28]]
+place = {"top", "bottom", "top", "bottom", "top", "bottom", "top", "bottom"}
+side = {"left", "right", "left", "right", "left", "right", "left", "right"}
+ttt = {tt1, tt2, tt3, tt4, tt5, tt6}
+for i=1:6
+    subplot(211)
+    xlin = []
+    figure(i)
+    for ii=1:length(xlines{i})
+        xlin = [xlin, xline(xlines{i}(ii),'--','Color', 'r', 'Linewidth', 2)]
+        xlin(ii).LabelOrientation = 'horizontal'
+        xlin(ii).Label = xlinelegs{i}{ii}
+        xlin(ii).LabelHorizontalAlignment = side{ii};
+%         xlin(ii).LabelVerticalAlignment = place{ii};
+    end
+    ylabel("Voltage [V]")
+    xlabel("Time [s]")
+    ylim(ylims)
+    legend(leg);
+    
+    
+    subplot(212)
+    plot(seconds(ttt{1,i}.Time), ttt{1,i}.Var1(:,2:4))
+
+    xlin = []
+    for jj=1:length(xlines{i})
+        xlin = [xlin, xline(xlines{i}(jj),'--','Color', 'r', 'Linewidth', 2)]
+        xlin(jj).LabelOrientation = 'horizontal'
+        xlin(jj).Label = xlinelegs{i}{jj}
+        xlin(jj).LabelHorizontalAlignment = side{jj};
+%         xlin(jj).LabelVerticalAlignment = place{jj};
+    end
+    xlim(xlims(i,:))
+    ylim(ylims)
+    legend(leg);
+    ylabel("Voltage [V]")
+    xlabel("Time [s]")
+    grid on
+    subtitle("Zoomed view of event", 'Fontsize', 15)
+end
+%%
+% % savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\12. Documentation\test_journals\alphabetaPLL_01\figures'
+% % filename = ["TC1_freq_signals.png"; "TC2_phase_signals.png" ;"TC3_fluct_signals.png"; "TC4_dip_signals.png"; "TC5_harm_signals.png"; "TC6_interrupt_signals.png"]
+savepath = 'C:\Users\Kasper Laustsen\Aarhus universitet\Martin Højlund Therkildsen - Bachelor\10. Accepttest\Accepttest specification\Plots_TC'
+filename = ["TC1_freq.png"; "TC2_phase.png" ;"TC3_fluct.png"; "TC4_dip.png"; "TC5_harm.png"; "TC6_interrupt.png"]
+for i=1:6
+    f = fullfile(savepath,append("Long_",filename(i)))
+
+    exportgraphics(figures(i), f,'Resolution', 400)
+end
