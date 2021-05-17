@@ -15,6 +15,7 @@
 #define TWO_PI 				(2.0*PI)							// 2*PI
 #define RAD_120				120.0f*3.1415926535897f/180.0f		// [rad] 120 deg phase in radians
 #define F_RAD 				(50.0f*3.1415926535897f*2.0f)		// [rad/s] 50 Hz in radians
+#define DAC_SCALING			4096.0f/3.3f						// Voltage -> 12 bit
 
 // Sampling
 #define F_SAMPLE 			10000								// [Hz] The sample rate of the system (the interrupt timer

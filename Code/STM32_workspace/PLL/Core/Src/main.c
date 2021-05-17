@@ -86,8 +86,8 @@ int16_t timingArray[10];
 int16_t timer_temp;
 
 
-uint16_t var_dac;		// Dac output variable
-float var_dac_f;			// Temporary float for dac output
+uint16_t dac_out;		// Dac output variable
+float varDacScaled;			// Temporary float for dac output
 
 uint16_t adcValue1, adcValue2, adcValue3;
 
@@ -703,8 +703,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim10)
   {
     static uint16_t count; 			// Counter for sine output
-//    static uint16_t var_dac;		// Dac output variable
-//    static float var_dac_f;			// Temporary float for dac output
+//    static uint16_t dac_out;		// Dac output variable
+//    static float varDacScaled;			// Temporary float for dac output
 
     // PLL variables start
     // Variables declared globally for easier debugging.
@@ -735,12 +735,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     adcValue3 = HAL_ADC_GetValue(&hadc3);
     timingArray[0] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
-
-
-
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
-
+    // Scaling of ADC input signals
     timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
@@ -832,22 +829,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     //--------------------------------------------------------------------------------------------
     // PLL End
-//    static float temp = 0.1;
-//    temp = temp + 0.1f;
-//    if (temp > 3.2f) {
-//    	temp = 0.1;
+    static float varDac = 0.1;		// Temporary dac voltage value
+    static float varDacComp;		// Voltage compensated for
+//    varDac = varDac + 0.1f;
+//    if (varDac > 3.2f) {
+//    	varDac = 0.1;
 //    }
     // DAC
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-    var_dac_f = (anglePll*0.5f + 0.05f) * 4096.0f/3.3f;	// +1 for offset for negative values, /3.3 for scaling
-//    static float var;
-//    var = temp;
-//    var_dac_f = (var * 4096.0f/3.3f) +  var*(-0.0078) + 45.783;		// +1 for offset for negative values, /3.3 for scaling
-//    var_dac_f = (var * 4096.0f/3.3f);		// +1 for offset for negative values, /3.3 for scaling
-    var_dac = (uint16_t)var_dac_f; 			// Convert from float to uint16_t
+    varDac  =  (anglePll*0.47f + 0.1f);	// +1 for offset for negative values, /3.3 for scaling
+    varDacComp = dac_offset(varDac, -0.0084f, 0.0054f);	// Inverse DAC offset
+    varDacScaled = varDacComp * DAC_SCALING;			// Scaled from voltage to digital value
+    dac_out = (uint16_t)varDacScaled; 					// Convert from float to uint16_t
 
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, var_dac); // Set dac to digital value
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dac_out); // Set dac to digital value
+
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
     // Ring buffer

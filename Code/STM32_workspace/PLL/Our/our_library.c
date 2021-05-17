@@ -202,3 +202,9 @@ void printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t readSt
 
 }
 */
+
+float dac_offset(float var, float a, float b)
+{
+	 return var + var * a + b;
+}
+
