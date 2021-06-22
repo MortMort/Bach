@@ -49,7 +49,7 @@ void circular_buffer(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t *da
             }
 
 
-            ;// FUCKING STOP
+            ;// STOP
         }
         else {
             circularBuffer[writeIndex] = *dataInput;
@@ -103,15 +103,16 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
     static uint8_t	eventLatch			=	0;	// Latches upon event flag going high and resets when buffer is full
 
 
-    // Latch event, so it doesn't have to be held HIGH
+    // Latch event, so event doesn't have to be held HIGH
     if (event) {
     	eventLatch = 1;
     }
-
+    // If buffer is filled: Read starts at the index after the current write index
+    // for some reason this works when readStart = writeIndex and not writeIndex+1?
     if (bufferLength == bufferSize) {
         *readStart = writeIndex;
     }
-
+    // Reset circular buffer
     if (reset) {
     	bufferDoneFlag = 0;
     }
@@ -128,7 +129,7 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
         if (bufferSplitLength == bufferSize) {
             if (!bufferFullEntry) {
             	bufferDoneFlag = 1;
-                // Do something?
+                // Put code here to do something when the buffer fills
                 bufferFullEntry = 1;
             }
             // STOP
@@ -165,43 +166,6 @@ uint8_t circular_buffer(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_S
     return bufferDoneFlag;
 }
 
-
-/*
-//  Function    :   printRingBuf
-//  Description :   prints the ring buffer values
-//  Parameters  :   uint16_t bufferSize: pointer to an int to store the number
-//                  uint16_t *circularBuffer: Pointer to circular buffer array
-//                  uint16_t readStart: starting index of the circular buffer
-//  Returns     :	none
-void printRingBuf(uint16_t bufferSize, uint16_t *circularBuffer, uint16_t readStart) {
-    static uint16_t readIndex   =   0;
-    static uint8_t init         =   0;
-
-    static char msg[50];
-
-    // Initialize readIndex to readStart
-    if (!init) {
-        readIndex = readStart;
-        init = 1;
-    }
-
-    for (int i = 0; i < bufferSize; i++)
-    {
-        //printf("Buffervalue at index [%d] = %d\n", readIndex, circularBuffer[readIndex]);
-
-    	huart2.Instance->CR3 |= USART_CR3_DMAT;
-    	sprintf(msg, "circularBuffer index [%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
-    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
-    							(uint32_t)&huart2.Instance->DR, strlen(msg));
-
-        readIndex++;
-        if (readIndex > bufferSize) {
-            readIndex = 0;
-        }
-    }
-
-}
-*/
 
 float dac_offset(float var, float a, float b)
 {

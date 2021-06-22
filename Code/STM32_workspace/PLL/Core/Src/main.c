@@ -67,13 +67,10 @@ DMA_HandleTypeDef hdma_usart2_tx;
 // ADC & DAC DMA buffer
 uint16_t readStart;
 
-// Ring buffer
-int16_t ringBuf[RING_BUF_LEN][RING_BUF_SIZE];
-int16_t ringBufData[RING_BUF_SIZE];
-
-uint16_t adcRingBuf1[ADC_RING_BUF_SIZE];
-uint16_t adcRingBuf2[ADC_RING_BUF_SIZE];
-uint16_t adcRingBuf3[ADC_RING_BUF_SIZE];
+// Ring/Circular buffer
+int16_t ringBuf[RING_BUF_LEN][RING_BUF_SIZE];	// The actual full ringbuffer
+int16_t ringBufData[RING_BUF_SIZE];				// Data array for data to input into ringbuffer.
+												// Holds one value per signal for each interrupt
 
 
 uint8_t	ringBufTrigger2 = 0;	// Triggers the ring buffer from the gpio input
@@ -81,32 +78,9 @@ uint8_t ringBufFlag	= 0;		// Goes high when the ring buffer is done filling the 
 uint8_t ringBufPrintDone = 0;	// Goes high when printing of ring buffer is done, so usart isn't called again
 uint8_t ringBufReset = 0;
 
-// Execution time, time taking
-int16_t timingArray[10];
-int16_t timer_temp;
-
-
-uint16_t dac_out;		// Dac output variable
-float varDacScaled;			// Temporary float for dac output
-
 uint16_t adcValue1, adcValue2, adcValue3;
 
 float phaseA, phaseB, phaseC, angleDq;
-
-// Declared in interrupt normally
-float alpha1, beta1, Vq, Vd, VqMaf, VdMaf, alpha2, beta2, cosGrid, sinGrid;
-float phaseError, anglePllComp, anglePll;
-
-// T_st = 0.02 * 6:
-//float ki = 2938.8889;
-//float kp = 106.0408611;
-//float kPhi = 0.010;
-
-// T_st = 0.02 * 1:
-float ki = 105800;
-float kp = 1465.1;
-float kPhi = 0.0095;
-
 
 
 // File opening pointer
@@ -702,21 +676,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim == &htim10)
   {
-    static uint16_t count; 			// Counter for sine output
-//    static uint16_t dac_out;		// Dac output variable
-//    static float varDacScaled;			// Temporary float for dac output
+    // DAC variables
+    static uint16_t dac_out;		// Dac output variable
+    static float varDacScaled;		// Temporary float for dac output
+    static float varDac = 0.1;		// Temporary dac voltage value
+    static float varDacComp;		// Compensated for DAC offset
 
-    // PLL variables start
-    // Variables declared globally for easier debugging.
-    //    static float angleDq, alpha1, beta1, Vq, Vd, alpha2, beta2, cosGrid, sinGrid;
-    // PLL variables end
+    // PLL variables
+    static float alpha1, beta1, Vq, Vd, VqMaf, VdMaf, alpha2, beta2, cosGrid, sinGrid;
+    static float phaseError, anglePllComp, anglePll;
 
-	// Set pin: Start timer
+
+	// Set pin: For execution timing
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 
     // ADCs
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
     // ADC 1
     HAL_ADC_Start(&hadc1);
@@ -731,121 +705,74 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// ADC 3
     HAL_ADC_Start(&hadc3);
     HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY);
-
     adcValue3 = HAL_ADC_GetValue(&hadc3);
-    timingArray[0] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
     // Scaling of ADC input signals
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
     phaseA = (float)adcValue1/(0xFFF+1)*3.3f - 1.65f;
     phaseB = (float)adcValue2/(0xFFF+1)*3.3f - 1.65f;
     phaseC = (float)adcValue3/(0xFFF+1)*3.3f - 1.65f;
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-    timingArray[1] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
 
     // PLL Start
     //--------------------------------------------------------------------------------------------
+
+    // Generate Angle for DQ-transformation - Rotates at nominal frequency (50  Hz)
     angleDq = angleDq + T_SAMPLE*F_RAD;
     if (angleDq > TWO_PI)
     {
     	angleDq = angleDq - TWO_PI;
     }
 
-
-    	// Create simulation three phase
-    //    phaseA = sinf(angleDq);
+    	// Create simulated three phase (based on dq-angle)
+    //  phaseA = sinf(angleDq);
     //	phaseB = sinf(angleDq-RAD_120);
     //	phaseC = sinf(angleDq+RAD_120);
 
-	// abc -> alpha beta
-	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
+	// Transformation: abc -> alpha beta
+    // Outputs: alpha1 & beta1
     abc_to_alphabeta(phaseA, phaseB, phaseC, &alpha1, &beta1);
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-    timingArray[2] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
-    // alpha beta -> DQ
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
+    // Transformation: alpha beta -> DQ
+    // Outputs: Vd & Vq
     alphabeta_to_dq(alpha1, beta1, angleDq, &Vd, &Vq);
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-    timingArray[3] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
     // MAF
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
+    // Outputs: VdMaf & VqMaf
 	maf(&Vd, &Vq, &VdMaf, &VqMaf);
 
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-	timingArray[4] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
-	// DQ -> alpha beta
-	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
+	// Transformation: DQ -> alpha beta
+	// Outputs: alpha2 & beta2
     dq_to_alphabeta(VdMaf, VqMaf, angleDq, &alpha2, &beta2);
 
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-	timingArray[5] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
-
-	// sinGrid & cosGrid
-	timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
+	// normalization: sinGrid & cosGrid
+    // Outputs: cosGrid & sinGrid
     cos_sin_grid(alpha2, beta2, &cosGrid, &sinGrid);
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-    timingArray[6] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
     // Phase detector
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
     phaseError = phase_detector(cosGrid, sinGrid, anglePllComp);
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-    timingArray[7] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
     // PI-regulator
-    timer_temp = __HAL_TIM_GET_COUNTER(&htim1);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-
-    pi_regulator(phaseError, F_RAD, ki, kp, kPhi, T_SAMPLE, &anglePll, &anglePllComp);
-
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
-    timingArray[8] = __HAL_TIM_GET_COUNTER(&htim1) - timer_temp;
-
+    // Outputs: anglePll & anglePllComp
+    pi_regulator(phaseError, F_RAD, KI, KP, KPHI, T_SAMPLE, &anglePll, &anglePllComp);
 
     //--------------------------------------------------------------------------------------------
     // PLL End
-    static float varDac = 0.1;		// Temporary dac voltage value
-    static float varDacComp;		// Voltage compensated for
+
+    // DAC
+    // DAC offset compensation loop
 //    varDac = varDac + 0.1f;
 //    if (varDac > 3.2f) {
 //    	varDac = 0.1;
 //    }
-    // DAC
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
-    varDac  =  (anglePll*0.47f + 0.1f);	// +1 for offset for negative values, /3.3 for scaling
+
+    varDac  =  (anglePll*0.47f + 0.1f);					// scaling and offset to utilization of DAC output spectrum
+    													// while staying >100 mV and <3200 mV
     varDacComp = dac_offset(varDac, -0.0084f, 0.0054f);	// Inverse DAC offset
     varDacScaled = varDacComp * DAC_SCALING;			// Scaled from voltage to digital value
     dac_out = (uint16_t)varDacScaled; 					// Convert from float to uint16_t
 
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); 	// Start the DAC
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dac_out); // Set dac to digital value
-
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dac_out); // Set dac to value
 
     // Ring buffer
     /*
@@ -895,31 +822,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     ringBufData[0]  = ((float)	anglePll 		* (float)RING_BUF_SCALING);
 
 
-
-    // Timing:
-//    ringBufData[17] = timingArray[0];
-//    ringBufData[18] = timingArray[1];
-//    ringBufData[19] = timingArray[2];
-//    ringBufData[20] = timingArray[3];
-//    ringBufData[21] = timingArray[4];
-//    ringBufData[22] = timingArray[5];
-//    ringBufData[23] = timingArray[6];
-//    ringBufData[24] = timingArray[7];
-//    ringBufData[25] = timingArray[8];
-
     ringBufFlag = circular_buffer(RING_BUF_LEN, ringBuf, ringBufData, ringBufTrigger2, ringBufReset, RING_BUF_SPLIT, &readStart);
 
 
-
-    // Count up interrupt count
-	if (count < (RING_BUF_LEN*RING_BUF_SPLIT))
-	{
-	  count++;
-	}
-	else
-	{
-	  count = 0;
-	}
 
 
 	// Reset pin: Stop timer
@@ -973,13 +878,7 @@ uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SI
 
     	// sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
 
-
     	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-
-//    	huart2.Instance->CR3 |= USART_CR3_DMAT;
-//    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
-//    							(uint32_t)&huart2.Instance->DR, strlen(msg));
-
 
         readIndex++;
         if (readIndex > bufferSize) {
@@ -991,8 +890,8 @@ uint8_t print_ring_buf(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF_SI
 }
 */
 
-//  Function    :   print_ring_buf
-//  Description :   prints the ring buffer values
+//  Function    :   print_ring_buf_v2
+//  Description :   prints the ring buffer values - Optimized version
 //  Parameters  :   uint16_t bufferSize: The amount of sampling points that the circularBuffer can contain
 //                  uint16_t circularBuffer: Pointer to circular buffer array
 //                  uint16_t readStart: starting index of the circular buffer
@@ -1010,65 +909,42 @@ uint8_t print_ring_buf_v2(uint16_t bufferSize, int16_t circularBuffer[][RING_BUF
         init = 1;
     }
 
-//	sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
+//	  sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq, t_adc, t_3p_sin, t_abc_ab, t_ab_dq, t_maf, t_dq_ab, t_sin_cos, t_phase_d, t_pi_regulator \r\n");
 //    sprintf(msg, "phaseA, phaseB, phaseC, alpha1, beta1, Vd, Vq, VdMaf, VqMaf, alpha2, beta2, cosGrid, sinGrid, phaseError, anglePll, anglePllComp, angleDq\r\n");
 //    sprintf(msg, "phaseA, phaseB, phaseC, Vd, Vq, VdMaf, VqMaf, anglePll\r\n");
+//    sprintf(msg, "phaseA, phaseB, phaseC, VdMaf, VqMaf, cosGrid, sinGrid, phaseError, anglePll, angleDq\r\n");
     sprintf(msg, "anglePll\r\n");
 
-//    sprintf(msg, "phaseA, phaseB, phaseC, VdMaf, VqMaf, cosGrid, sinGrid, phaseError, anglePll, angleDq\r\n");
-
+    // Print names of signals
 	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
-
+	// Outer loop: Iterate over samples
     for (int i = 0; i < bufferSize; i++)
     {
-        //printf("Buffervalue at index [%d] = %d\n", readIndex, circularBuffer[readIndex]);
-
-//    	sprintf(msg, "%d, %d, %d, %d\r\n", circularBuffer[readIndex][0], circularBuffer[readIndex][1],
-//									circularBuffer[readIndex][2], circularBuffer[readIndex][3]);	// Update message for usart print
+        // Inner loop: Iterate over variables (phaseA, phaseB etc.
     	for (int n = 0; n < (RING_BUF_SIZE); n++) {
 
     		if (n < RING_BUF_SIZE-1) {
     			pos += sprintf(&msg[pos], "%d, ", circularBuffer[readIndex][n]);
     		}
     		else {
+    			// Last variable: Don't put comma and place a 'next line'
     			pos += sprintf(&msg[pos], "%d\r\n", circularBuffer[readIndex][n]);
     		}
     	}
 
-    	/*
-    	sprintf(msg, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\r\n",
-											circularBuffer[readIndex][0], 	circularBuffer[readIndex][1],
-											circularBuffer[readIndex][2], 	circularBuffer[readIndex][3],
-											circularBuffer[readIndex][4], 	circularBuffer[readIndex][5],
-											circularBuffer[readIndex][6], 	circularBuffer[readIndex][7],
-											circularBuffer[readIndex][8], 	circularBuffer[readIndex][9],
-											circularBuffer[readIndex][10], 	circularBuffer[readIndex][11],
-											circularBuffer[readIndex][12], 	circularBuffer[readIndex][13],
-											circularBuffer[readIndex][14], 	circularBuffer[readIndex][15],
-											circularBuffer[readIndex][16], circularBuffer[readIndex][17],
-											circularBuffer[readIndex][18], circularBuffer[readIndex][19],
-											circularBuffer[readIndex][20], circularBuffer[readIndex][21],
-											circularBuffer[readIndex][22], circularBuffer[readIndex][23],
-											circularBuffer[readIndex][24], circularBuffer[readIndex][25]);	// Update message for usart print
-
-    	// sprintf(msg, "[%d] = %d\r\n", readIndex, circularBuffer[readIndex]);	// Update message for usart print
-		*/
-
+    	// Print message on UART via huart2
     	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-    	/*
-    	huart2.Instance->CR3 |= USART_CR3_DMAT;
-    	HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
-    							(uint32_t)&huart2.Instance->DR, strlen(msg));
-		*/
+
     	pos = 0;	// Reset pos
         readIndex++;
         if (readIndex > (bufferSize-1)) {
             readIndex = 0;
         }
     }
-    return 1;
 
+    // Return 1 when finished
+    return 1;
 }
 
 

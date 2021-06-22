@@ -1,3 +1,3 @@
 our_library.c:12:7:two_to_three_phase	16	static
 our_library.c:94:9:circular_buffer	32	static
-our_library.c:206:7:dac_offset	24	static
+our_library.c:170:7:dac_offset	24	static

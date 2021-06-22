@@ -26,4 +26,15 @@
 #define T_MAF				0.02f
 #define MAF_LEN 			(int)(200)							// MAF length REMEMBER TO SET THIS WHEN CHANGING SAMPLE FREQUENCY
 
+// Tuning
+
+// T_st = 0.02 * 6:
+//float ki = 2938.8889;
+//float kp = 106.0408611;
+//float kPhi = 0.010;
+
+// T_st = 0.02 * 1:
+#define KI 105800
+#define KP 1465.1f
+#define KPHI 0.0095f
 // Other
